@@ -8,10 +8,17 @@ buildscript {
     }
 }
 
+plugins{
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'io.franzbecker.gradle-lombok' version '1.11' apply false
+    id 'org.springframework.boot' version '1.5.9.RELEASE' apply false
+}
+
 allprojects {
     group 'com.github.utransnet'
-    apply plugin: 'java'
-    apply plugin: "idea"
+
     sourceCompatibility = 1.8
 
     ext {
@@ -26,8 +33,16 @@ allprojects {
 
 project(':simulator'){
     version '0.0.1'
+
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.franzbecker.gradle-lombok'
+
     dependencies {
         testCompile group: 'junit', name: 'junit', version: junitVersion
+        compile 'org.springframework.boot:spring-boot-starter-web'
+        testCompile 'org.springframework.boot:spring-boot-starter-test'
+
+//        compile 'com.github.utransnet:graphenj:0.4.6' // not yet published
     }
 
 }
