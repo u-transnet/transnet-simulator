@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+
+    }
+}
+
+allprojects {
+    group 'com.github.utransnet'
+    apply plugin: 'java'
+    apply plugin: "idea"
+    sourceCompatibility = 1.8
+
+    ext {
+        junitVersion = '4.12'
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
+project(':simulator'){
+    version '0.0.1'
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: junitVersion
+    }
+
+}
