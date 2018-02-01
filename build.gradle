@@ -42,7 +42,7 @@ project(':simulator'){
         compile 'org.springframework.boot:spring-boot-starter-web'
         testCompile 'org.springframework.boot:spring-boot-starter-test'
 
-//        compile 'com.github.utransnet:graphenj:0.4.6' // not yet published
+//        compile 'com.github.utransnet:graphenj:0.4.2' // not yet published
     }
 
 }
