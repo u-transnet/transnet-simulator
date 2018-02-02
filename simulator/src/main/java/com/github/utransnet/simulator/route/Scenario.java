@@ -1,4 +1,4 @@
-package com.github.utransnet.simulator;
+package com.github.utransnet.simulator.route;
 
 import com.github.utransnet.simulator.actors.BaseInfObject;
 import com.github.utransnet.simulator.actors.Client;

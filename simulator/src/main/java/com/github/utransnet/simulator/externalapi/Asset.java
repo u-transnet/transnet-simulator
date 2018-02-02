@@ -1,4 +1,4 @@
-package com.github.utransnet.simulator.graphene;
+package com.github.utransnet.simulator.externalapi;
 
 /**
  * Created by Artem on 31.01.2018.
