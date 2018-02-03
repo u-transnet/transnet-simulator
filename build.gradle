@@ -23,6 +23,8 @@ allprojects {
 
     ext {
         junitVersion = '4.12'
+        commonsLang3Version = '3.7'
+        jetbrainsAnnotationsVersion = '15.0'
     }
 
     repositories {
@@ -41,6 +43,10 @@ project(':simulator'){
         testCompile group: 'junit', name: 'junit', version: junitVersion
         compile 'org.springframework.boot:spring-boot-starter-web'
         testCompile 'org.springframework.boot:spring-boot-starter-test'
+        compile group: 'org.jetbrains', name: 'annotations', version: jetbrainsAnnotationsVersion
+
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
+
 
 //        compile 'com.github.utransnet:graphenj:0.4.2' // not yet published
     }
