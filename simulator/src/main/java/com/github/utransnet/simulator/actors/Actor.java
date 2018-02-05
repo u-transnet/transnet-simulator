@@ -1,9 +1,13 @@
 package com.github.utransnet.simulator.actors;
 
+import com.github.utransnet.simulator.actors.task.ActorTask;
+import com.github.utransnet.simulator.actors.task.DelayedAction;
+import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
@@ -15,9 +19,14 @@ import java.util.Set;
  */
 public abstract class Actor {
 
-    final ExternalAPI externalAPI;
+    private final ExternalAPI externalAPI;
 
     private final Set<OperationListener> operationListeners = new HashSet<>(16);
+
+    private final Set<DelayedAction> delayedActions = new HashSet<>(16);
+
+    @Nullable
+    private ActorTask currentTask;
 
     @Setter(AccessLevel.PACKAGE)
     private Set<AssetAmount> balance;
@@ -42,7 +51,12 @@ public abstract class Actor {
                             )
                             .forEach(listener -> listener.fire(operation)));
         }
+        delayedActions.forEach(delayedAction -> delayedAction.update(seconds));
+    }
 
+    public void setCurrentTask(ActorTask currentTask) {
+        this.currentTask = currentTask;
+        currentTask.start();
     }
 
     public String getId() {
@@ -58,12 +72,20 @@ public abstract class Actor {
         return !Objects.equals(externalAPI.getLastOperation(uTransnetAccount).getId(), lastOperationId);
     }
 
-    protected final void addOperationListener(OperationListener operationListener) {
+    public final void addOperationListener(OperationListener operationListener) {
         operationListeners.add(operationListener);
     }
 
-    protected final void removeOperationListener(String name) {
-        operationListeners.remove(new OperationListener(name));
+    public final void removeOperationListener(String name) {
+        operationListeners.removeIf(listener -> Objects.equals(listener.getName(), name));
+    }
+
+    public final void addDelayedAction(DelayedAction delayedAction) {
+        delayedActions.add(delayedAction);
+    }
+
+    public final void removeDelayedAction(String name) {
+        delayedActions.removeIf(delayedAction -> Objects.equals(delayedAction.getName(), name));
     }
 
     protected void payTo(UserAccount receiver, AssetAmount assetAmount) {

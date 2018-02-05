@@ -1,11 +1,10 @@
 package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.actors.Actor;
-import com.github.utransnet.simulator.actors.Logist;
+import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.*;
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.util.HashSet;
