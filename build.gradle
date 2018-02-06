@@ -1,0 +1,54 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+
+    }
+}
+
+plugins{
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'io.franzbecker.gradle-lombok' version '1.11' apply false
+    id 'org.springframework.boot' version '1.5.9.RELEASE' apply false
+}
+
+allprojects {
+    group 'com.github.utransnet'
+
+    sourceCompatibility = 1.8
+
+    ext {
+        junitVersion = '4.12'
+        commonsLang3Version = '3.7'
+        jetbrainsAnnotationsVersion = '15.0'
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
+project(':simulator'){
+    version '0.0.1'
+
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.franzbecker.gradle-lombok'
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: junitVersion
+        compile 'org.springframework.boot:spring-boot-starter-web'
+        testCompile 'org.springframework.boot:spring-boot-starter-test'
+        compile group: 'org.jetbrains', name: 'annotations', version: jetbrainsAnnotationsVersion
+
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
+
+
+//        compile 'com.github.utransnet:graphenj:0.4.2' // not yet published
+    }
+
+}
