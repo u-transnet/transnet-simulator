@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -64,23 +65,28 @@ public class ActorTask {
         if (onStart != null) {
             onStart.accept(context);
         }
-        if (context.getSuccessPredicate() != null) {
+        if (context.getSuccessPredicate() != null && context.getOperationType() != null) {
             executor.addOperationListener(new OperationListener(
                     name + "-finish",
                     context.getOperationType(),
                     operation -> {
-                        if (context.getSuccessPredicate().apply(operation)) {
-                            finish();
+                        try {
+                            if (context.getSuccessPredicate().apply(context, operation)) {
+                                finish();
+                            }
+                        } catch (Exception e) {
+                            context.setException(e);
+                            cancel();
                         }
                     }
             ));
         }
-        if (context.getFailPredicate() != null) {
+        if (context.getFailPredicate() != null && context.getOperationType() != null) {
             executor.addOperationListener(new OperationListener(
                     name + "-cancel",
                     context.getOperationType(),
                     operation -> {
-                        if (context.getFailPredicate().apply(operation)) {
+                        if (context.getFailPredicate().apply(context, operation)) {
                             finish();
                         }
                     }
@@ -101,9 +107,13 @@ public class ActorTask {
             onEnd.accept(context);
         }
         destroy();
+        if (next != null) {
+            this.context.payload.forEach(next.getContext()::addPayload);
+            executor.setCurrentTask(next);
+        }
     }
 
-    public void cancel() {
+    private void cancel() {
         if (onCancel != null) {
             onCancel.accept(context);
         }
@@ -114,9 +124,6 @@ public class ActorTask {
         executor.removeOperationListener(name + "-finish");
         executor.removeOperationListener(name + "-cancel");
         executor.removeDelayedAction(name + "-finish");
-        if (next != null) {
-            executor.setCurrentTask(next);
-        }
     }
 
     public ActorTaskBuilder createNext() {
