@@ -1,24 +1,33 @@
 package com.github.utransnet.simulator.actors;
 
-import com.github.utransnet.simulator.Stub;
 import com.github.utransnet.simulator.Utils;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
+import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
-import com.github.utransnet.simulator.externalapi.operations.*;
+import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
+import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
+import com.github.utransnet.simulator.externalapi.operations.OperationType;
+import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import lombok.Setter;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 
 /**
  * Created by Artem on 31.01.2018.
  */
 public class Client extends Actor {
     private final RouteMapFactory routeMapFactory;
+
+    @Setter
+    private String logistName;
+
+    @Setter
+    private AssetAmount routeMapPrice;
 
     public Client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory) {
         super(externalAPI);
@@ -27,21 +36,15 @@ public class Client extends Actor {
 
     @PostConstruct
     private void init() {
-        ActorTask initTask = ActorTask.builder()
-                .name("client-init")
-                .context(new ActorTaskContext(0))
-                .onEnd(this::findLogist)
-                .build();
-        initTask.createNext()
-
+        ActorTask buyRoputeMapTask = ActorTask.builder()
                 .name("buy-route-map")
                 .context(new ActorTaskContext(
                         OperationType.MESSAGE,
                         this::checkReceivedRouteMap
                 ))
                 .onStart(this::buyRouteMap)
-                .build()
-                .createNext()
+                .build();
+        buyRoputeMapTask.createNext()
 
                 .name("buy-trip")
                 .context(new ActorTaskContext(60))
@@ -62,27 +65,20 @@ public class Client extends Actor {
                 .context(new ActorTaskContext(60))
                 .onEnd(this::tellInRailCar)
         ;
-        addTask(initTask);
+        addTask(buyRoputeMapTask);
     }
 
     //region operations with Logist
-    private void findLogist(ActorTaskContext context) {
-        //TODO: find logist account
-        context.addPayload("logist-account", new Stub());
-    }
-
     private void buyRouteMap(ActorTaskContext context) {
-        UserAccount logistAccount = context.getPayload("logist-account");
-        //TODO: request price
-        getUTransnetAccount().sendAsset(logistAccount, null, "");
+        UserAccount logistAccount = getLogist();
+        getUTransnetAccount().sendAsset(logistAccount, routeMapPrice, "");
 
     }
 
     private boolean checkReceivedRouteMap(ActorTaskContext context, BaseOperation baseOperation) {
-        if(baseOperation instanceof MessageOperation){
+        if (baseOperation instanceof MessageOperation) {
             MessageOperation operation = (MessageOperation) baseOperation;
-            if(operation.getFrom().equals(context.getPayload("logist-account")))
-            {
+            if (operation.getFrom().equals(getLogist())) {
                 return true;
             }
         }
@@ -96,7 +92,6 @@ public class Client extends Actor {
         RouteMap routeMap = getRouteMap(context);
         getUTransnetAccount().sendMessage(routeMap.getStart(), routeMapFactory.toJson(routeMap));
     }
-
 
 
     private void payForRoutePart(ActorTaskContext context) {
@@ -129,9 +124,13 @@ public class Client extends Actor {
 
 
     private RouteMap getRouteMap(ActorTaskContext context) {
-        UserAccount logistAccount = context.getPayload("logist-account");
+        UserAccount logistAccount = getLogist();
         TransferOperation transferOperation = Utils.getLast(getUTransnetAccount().getTransfersFrom(logistAccount));
         return routeMapFactory.fromJson(transferOperation.getMemo());
+    }
+
+    private UserAccount getLogist() {
+        return getExternalAPI().getAccountByName(logistName);
     }
 
 
