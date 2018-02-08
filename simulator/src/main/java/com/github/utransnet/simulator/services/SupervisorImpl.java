@@ -78,9 +78,5 @@ public class SupervisorImpl implements Supervisor {
         while (newClient != null) {
             addClient(newClient);
         }
-        RouteMap newRouteMap = routeMapInputQueue.poll();
-        while (newRouteMap != null) {
-            addRouteMap(newRouteMap);
-        }
     }
 }
