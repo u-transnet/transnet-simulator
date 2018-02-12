@@ -4,36 +4,29 @@ import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.DelayedAction;
 import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.*;
-import com.github.utransnet.simulator.queue.InputQueue;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.PostConstruct;
-import java.util.AbstractQueue;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Artem on 31.01.2018.
  */
 public abstract class Actor {
 
-    @Getter(AccessLevel.PROTECTED)
     private final ExternalAPI externalAPI;
 
     private final Set<OperationListener> operationListeners = new HashSet<>(16);
 
     private final Set<DelayedAction> delayedActions = new HashSet<>(16);
 
-    @Getter(AccessLevel.PROTECTED)
     @Nullable
     private ActorTask currentTask;
-
-    private final AbstractQueue<ActorTask> tasksQueue = new LinkedBlockingQueue<>(100);
 
     @Setter(AccessLevel.PACKAGE)
     private Set<AssetAmount> balance;
@@ -59,9 +52,6 @@ public abstract class Actor {
                             .forEach(listener -> listener.fire(operation)));
         }
         delayedActions.forEach(delayedAction -> delayedAction.update(seconds));
-        if(currentTask == null && !tasksQueue.isEmpty()) {
-            setCurrentTask(tasksQueue.poll());
-        }
     }
 
     public void setCurrentTask(ActorTask currentTask) {
@@ -105,11 +95,6 @@ public abstract class Actor {
     protected void payTo(UserAccount receiver, Asset asset, long amount) {
         externalAPI.sendAsset(uTransnetAccount, receiver, asset, amount);
     }
-
-    protected void addTask(ActorTask task) {
-        tasksQueue.offer(task);
-    }
-
 
 
     public boolean equals(Object o) {

@@ -1,13 +1,9 @@
 package com.github.utransnet.simulator.actors.factory;
 
-import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.actors.Logist;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPIConfig;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.queue.InputQueue;
-import com.github.utransnet.simulator.route.RouteMap;
-import com.github.utransnet.simulator.route.RouteMapFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -64,13 +60,7 @@ public class ActorConfig {
 
     @Bean
     @Autowired
-    Logist logist(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> routeMapInputQueue){
-        return new Logist(externalAPI, routeMapFactory, routeMapInputQueue);
-    }
-
-    @Bean
-    @Autowired
-    Client client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory){
-        return new Client(externalAPI, routeMapFactory);
+    Logist logist(ExternalAPI externalAPI){
+        return new Logist(externalAPI);
     }
 }
