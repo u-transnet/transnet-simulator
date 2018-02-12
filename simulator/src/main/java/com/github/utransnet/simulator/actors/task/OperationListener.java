@@ -1,7 +1,7 @@
 package com.github.utransnet.simulator.actors.task;
 
-import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
+import com.github.utransnet.simulator.externalapi.BaseOperation;
+import com.github.utransnet.simulator.externalapi.OperationType;
 import lombok.*;
 
 import java.util.function.Consumer;

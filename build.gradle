@@ -25,7 +25,6 @@ allprojects {
         junitVersion = '4.12'
         commonsLang3Version = '3.7'
         jetbrainsAnnotationsVersion = '15.0'
-        jacksonVersion = '2.9.4'
     }
 
     repositories {
@@ -47,8 +46,6 @@ project(':simulator'){
         compile group: 'org.jetbrains', name: 'annotations', version: jetbrainsAnnotationsVersion
 
         compile group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
-
 
 
 //        compile 'com.github.utransnet:graphenj:0.4.2' // not yet published
