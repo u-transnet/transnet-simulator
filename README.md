@@ -19,3 +19,7 @@
 * [Запросы к внешнему API](concept/docs/External_API.md) ✔
 * [Диаграмма классов](concept/docs/Classes.md)
 
+## Работа с кодом
+* [ExternalAPI](concept/docs/development/ExternalAPI.md)
+* [ActorModel](concept/docs/development/ActorModel.md)
+
