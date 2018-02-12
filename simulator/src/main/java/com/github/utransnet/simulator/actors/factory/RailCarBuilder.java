@@ -1,6 +1,5 @@
 package com.github.utransnet.simulator.actors.factory;
 
-import com.github.utransnet.simulator.actors.Logist;
 import com.github.utransnet.simulator.actors.RailCar;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import org.springframework.context.ApplicationContext;
@@ -10,6 +9,6 @@ import org.springframework.context.ApplicationContext;
  */
 public class RailCarBuilder extends ActorBuilder<RailCar> {
     RailCarBuilder(ApplicationContext context, APIObjectFactory objectFactory) {
-        super(context, objectFactory);
+        super(RailCar.class, context, objectFactory);
     }
 }

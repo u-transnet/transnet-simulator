@@ -1,6 +1,6 @@
 package com.github.utransnet.simulator.services;
 
-import com.github.utransnet.simulator.actors.Actor;
+import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;

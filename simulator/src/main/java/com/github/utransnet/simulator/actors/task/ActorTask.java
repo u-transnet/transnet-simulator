@@ -1,12 +1,11 @@
 package com.github.utransnet.simulator.actors.task;
 
-import com.github.utransnet.simulator.actors.Actor;
+import com.github.utransnet.simulator.actors.factory.Actor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -65,10 +64,10 @@ public class ActorTask {
         if (onStart != null) {
             onStart.accept(context);
         }
-        if (context.getSuccessPredicate() != null && context.getOperationType() != null) {
+        if (context.getSuccessPredicate() != null && context.getSuccessOperationType() != null) {
             executor.addOperationListener(new OperationListener(
                     name + "-finish",
-                    context.getOperationType(),
+                    context.getSuccessOperationType(),
                     operation -> {
                         try {
                             if (context.getSuccessPredicate().apply(context, operation)) {
@@ -81,13 +80,13 @@ public class ActorTask {
                     }
             ));
         }
-        if (context.getFailPredicate() != null && context.getOperationType() != null) {
+        if (context.getFailPredicate() != null && context.getFailOperationType() != null) {
             executor.addOperationListener(new OperationListener(
                     name + "-cancel",
-                    context.getOperationType(),
+                    context.getFailOperationType(),
                     operation -> {
                         if (context.getFailPredicate().apply(context, operation)) {
-                            finish();
+                            cancel();
                         }
                     }
             ));

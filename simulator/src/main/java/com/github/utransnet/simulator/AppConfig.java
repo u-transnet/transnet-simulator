@@ -4,7 +4,7 @@ import com.github.utransnet.simulator.actors.factory.ActorConfig;
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.ExternalAPIConfig;
+import com.github.utransnet.simulator.externalapi.impl.ExternalAPIConfig;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
 import com.github.utransnet.simulator.route.RouteMap;
