@@ -8,11 +8,15 @@ import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOpera
 public interface APIObjectFactory {
 
     Asset createAsset(String id);
+
     AssetAmount createAssetAmount(Asset asset, long amount);
+
     default AssetAmount createAssetAmount(String id, long amount) {
         return createAssetAmount(createAsset(id), amount);
     }
 
+    UserAccount createUserAccount(String name);
+    UserAccount createOrGetUserAccount(String name);
 
     Proposal convertProposalOperationToProposalObject(ProposalCreateOperation proposalCreateOperation);
 }

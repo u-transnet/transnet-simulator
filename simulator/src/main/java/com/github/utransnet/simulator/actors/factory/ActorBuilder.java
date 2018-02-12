@@ -1,11 +1,13 @@
 package com.github.utransnet.simulator.actors.factory;
 
-import com.github.utransnet.simulator.actors.Actor;
 import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.*;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.Assert;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,25 +15,25 @@ import java.util.Set;
 /**
  * Created by Artem on 02.02.2018.
  */
-public abstract class ActorBuilder<T extends Actor> {
+public class ActorBuilder<T extends Actor> {
 
-    protected Class<T> clazz;
+    final protected Class<T> clazz;
     private String id;
     private Set<AssetAmount> balance;
     private UserAccount uTransnetAccount;
-    private String lastOperationId;
-    private Set<OperationListener> operationListeners;
 
     @Getter(AccessLevel.PROTECTED)
     private final ApplicationContext context;
+    @Getter(AccessLevel.PROTECTED)
     private final APIObjectFactory objectFactory;
 
-    ActorBuilder(ApplicationContext context, APIObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
+    ActorBuilder(Class<T> clazz, ApplicationContext context, APIObjectFactory objectFactory) {
+        this.clazz = clazz;
         this.context = context;
+        this.objectFactory = objectFactory;
     }
 
-    public ActorBuilder id(String id) {
+    public ActorBuilder<T> id(String id) {
         this.id = id;
         return this;
     }
@@ -43,28 +45,30 @@ public abstract class ActorBuilder<T extends Actor> {
         return balance;
     }
 
-    public ActorBuilder balance(Set<AssetAmount> balance) {
+    public ActorBuilder<T> balance(Set<AssetAmount> balance) {
         this.balance = balance;
         return this;
     }
 
-    public ActorBuilder addAsset(AssetAmount assetAmount) {
+    public ActorBuilder<T> addAsset(AssetAmount assetAmount) {
         getBalance().add(assetAmount);
         return this;
     }
 
-    public ActorBuilder addAsset(Asset asset, long amount) {
-        getBalance().add(objectFactory.createAssetAmount(asset, amount));
-        return this;
-    }
-
-    public ActorBuilder uTransnetAccount(UserAccount uTransnetAccount) {
+    public ActorBuilder<T> uTransnetAccount(UserAccount uTransnetAccount) {
         this.uTransnetAccount = uTransnetAccount;
         return this;
     }
 
     public T build() {
-        return newInstance();
+        Assert.notNull(id, "Id of actor must be set");
+        T t = newInstance();
+        if (uTransnetAccount == null) {
+            uTransnetAccount = objectFactory.createOrGetUserAccount(id);
+        }
+        t.setUTransnetAccount(uTransnetAccount);
+        t.setBalance(balance);
+        return t;
     }
 
     protected T newInstance() {
@@ -74,6 +78,6 @@ public abstract class ActorBuilder<T extends Actor> {
 
 
     public String toString() {
-        return "Actor.ActorBuilder(id=" + this.id + ", balance=" + this.balance + ", uTransnetAccount=" + this.uTransnetAccount + ", lastOperationId=" + this.lastOperationId + ", operationListeners=" + this.operationListeners + ")";
+        return "Actor.ActorBuilder(id=" + this.id + ", balance=" + this.balance + ", uTransnetAccount=" + this.uTransnetAccount + ")";
     }
 }

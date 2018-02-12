@@ -1,6 +1,5 @@
 package com.github.utransnet.simulator.actors.factory;
 
-import com.github.utransnet.simulator.actors.Actor;
 import com.github.utransnet.simulator.actors.Logist;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import org.springframework.context.ApplicationContext;
@@ -10,6 +9,6 @@ import org.springframework.context.ApplicationContext;
  */
 public class LogistBuilder extends ActorBuilder<Logist> {
     LogistBuilder(ApplicationContext context, APIObjectFactory objectFactory) {
-        super(context, objectFactory);
+        super(Logist.class, context, objectFactory);
     }
 }

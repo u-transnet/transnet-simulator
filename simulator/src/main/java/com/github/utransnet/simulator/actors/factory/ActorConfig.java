@@ -3,7 +3,6 @@ package com.github.utransnet.simulator.actors.factory;
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.actors.Logist;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
-import com.github.utransnet.simulator.externalapi.ExternalAPIConfig;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -12,16 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 
 /**
  * Created by Artem on 02.02.2018.
  */
 @Configuration
-@Import({
-        ExternalAPIConfig.class
-})
 public class ActorConfig {
 
 

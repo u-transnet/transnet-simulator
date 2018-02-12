@@ -6,20 +6,21 @@ import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOpera
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Created by Artem on 31.01.2018.
  */
 public abstract class ExternalAPI {
-    abstract void sendProposal(UserAccount from, UserAccount to, UserAccount proposalCreator, Asset asset, long amount);
-    abstract void approveProposal(UserAccount feePayer, Proposal proposal);
+    public abstract void sendProposal(UserAccount from, UserAccount to, UserAccount proposalCreator, Asset asset, long amount);
+    public abstract void approveProposal(UserAccount feePayer, Proposal proposal);
 
 
-    abstract void sendAsset(UserAccount from, UserAccount to, AssetAmount assetAmount, String memo);
-    abstract void sendMessage(UserAccount from, UserAccount to, String message);
+    public abstract void sendAsset(UserAccount from, UserAccount to, AssetAmount assetAmount, String memo);
+    public abstract void sendMessage(UserAccount from, UserAccount to, String message);
 
-    abstract List<BaseOperation> getAccountHistory(UserAccount account, OperationType operationType);
+    public abstract List<BaseOperation> getAccountHistory(UserAccount account, OperationType operationType);
 
     @SuppressWarnings("unchecked")
     protected <T extends BaseOperation> List<T> filterHistory(UserAccount account, OperationType operationType, Class<T> clazz) {
@@ -29,20 +30,20 @@ public abstract class ExternalAPI {
                 .map(baseOperation -> (T) baseOperation)
                 .collect(Collectors.toList());
     }
-    List<TransferOperation> getAccountTransfers(UserAccount account) {
+    public List<TransferOperation> getAccountTransfers(UserAccount account) {
         return filterHistory(account, OperationType.TRANSFER, TransferOperation.class);
     };
 
-    List<Proposal> getAccountProposals(UserAccount account) {
+    public List<Proposal> getAccountProposals(UserAccount account) {
         return null; //TODO
     }
 
-    abstract UserAccount createAccount(String name);
+    public abstract UserAccount createAccount(String name);
     public abstract UserAccount getAccountByName(String name);
 
-    abstract BaseOperation getLastOperation(UserAccount account);
-    abstract List<BaseOperation> operationsBefore(String operationId);
-    abstract List<BaseOperation> operationsBefore(BaseOperation operation);
+    public abstract Optional<BaseOperation> getLastOperation(UserAccount account);
+    public abstract List<BaseOperation> operationsBefore(String operationId);
+    public abstract List<BaseOperation> operationsBefore(BaseOperation operation);
 
-    abstract UserAccount getUserAccountByName(String name);
+    public abstract UserAccount getUserAccountByName(String name);
 }

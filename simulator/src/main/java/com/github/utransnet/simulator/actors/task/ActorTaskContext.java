@@ -17,7 +17,11 @@ import java.util.function.Function;
 public class ActorTaskContext {
     @Getter
     @Nullable
-    private final OperationType operationType;
+    private final OperationType successOperationType;
+
+    @Getter
+    @Nullable
+    private final OperationType failOperationType;
 
     @Getter
     @Nullable
@@ -39,7 +43,8 @@ public class ActorTaskContext {
 
 
     private ActorTaskContext(
-            @Nullable OperationType operationType,
+            @Nullable OperationType successOperationType,
+            @Nullable OperationType failOperationType,
             @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate,
             @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> failPredicate,
             int waitSeconds
@@ -47,7 +52,8 @@ public class ActorTaskContext {
         if(successPredicate == null && waitSeconds == 0) {
             throw new RuntimeException("At least one finish condition should be set");
         }
-        this.operationType = operationType;
+        this.successOperationType = successOperationType;
+        this.failOperationType = failOperationType;
         this.successPredicate = successPredicate;
         this.failPredicate = failPredicate;
         this.waitSeconds = waitSeconds;
@@ -55,22 +61,23 @@ public class ActorTaskContext {
     }
 
     public ActorTaskContext(
-            OperationType operationType,
+            OperationType successOperationType,
+            OperationType failOperationType,
             @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate,
             @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> failPredicate
     ) {
-        this(operationType, successPredicate, failPredicate, 0);
+        this(successOperationType, failOperationType, successPredicate, failPredicate, 0);
     }
 
     public ActorTaskContext(
             OperationType operationType,
             @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate
     ) {
-        this(operationType, successPredicate, null, 0);
+        this(operationType, null, successPredicate, null, 0);
     }
 
     public ActorTaskContext(int waitSeconds) {
-        this(null, null, null, 0);
+        this(null, null, null, null, waitSeconds);
     }
 
     @SuppressWarnings("unchecked")
@@ -88,7 +95,7 @@ public class ActorTaskContext {
     }
 
 
-    public static final ActorTaskContext immediate() {
-        return new ActorTaskContext(0);
+    public static ActorTaskContext immediate() {
+        return new ActorTaskContext(1);
     }
 }

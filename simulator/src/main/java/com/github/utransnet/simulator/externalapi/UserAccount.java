@@ -1,9 +1,11 @@
 package com.github.utransnet.simulator.externalapi;
 
+import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.sun.javafx.geom.transform.BaseTransform;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Artem on 31.01.2018.
@@ -16,7 +18,7 @@ public abstract class UserAccount implements ExternalObject {
         this.externalAPI = externalAPI;
     }
 
-    abstract String getName();
+    public abstract String getName();
 
     public void sendAsset(UserAccount to, AssetAmount assetAmount, String memo) {
         externalAPI.sendAsset(this, to, assetAmount, memo);
@@ -47,4 +49,7 @@ public abstract class UserAccount implements ExternalObject {
     }
 
 
+    public Optional<BaseOperation> getLastOperation() {
+        return externalAPI.getLastOperation(this);
+    }
 }

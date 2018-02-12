@@ -1,5 +1,6 @@
 package com.github.utransnet.simulator.actors;
 
+import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
 import com.github.utransnet.simulator.actors.task.OperationListener;

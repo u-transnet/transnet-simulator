@@ -1,6 +1,7 @@
 package com.github.utransnet.simulator.actors;
 
 import com.github.utransnet.simulator.Utils;
+import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
@@ -16,6 +17,7 @@ import com.github.utransnet.simulator.route.RouteMapFactory;
 import lombok.Setter;
 
 import javax.annotation.PostConstruct;
+
 
 /**
  * Created by Artem on 31.01.2018.

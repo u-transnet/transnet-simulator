@@ -1,26 +1,22 @@
-package com.github.utransnet.simulator.actors;
+package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.DelayedAction;
 import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.*;
-import com.github.utransnet.simulator.queue.InputQueue;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
+import lombok.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.PostConstruct;
-import java.util.AbstractQueue;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Artem on 31.01.2018.
  */
-public abstract class Actor {
+@EqualsAndHashCode(of = "uTransnetAccount")
+public class Actor {
 
     @Getter(AccessLevel.PROTECTED)
     private final ExternalAPI externalAPI;
@@ -35,11 +31,11 @@ public abstract class Actor {
 
     private final AbstractQueue<ActorTask> tasksQueue = new LinkedBlockingQueue<>(100);
 
+    @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.PACKAGE)
     private Set<AssetAmount> balance;
 
     @Getter
-    @Setter(AccessLevel.PACKAGE)
     private UserAccount uTransnetAccount;
 
     private String lastOperationId;
@@ -73,13 +69,13 @@ public abstract class Actor {
         return uTransnetAccount.getId();
     }
 
-    @PostConstruct
-    private void init() {
-        lastOperationId = externalAPI.getLastOperation(uTransnetAccount).getId();
-    }
 
     protected boolean checkNewOperations() {
-        return !Objects.equals(externalAPI.getLastOperation(uTransnetAccount).getId(), lastOperationId);
+        return uTransnetAccount
+                .getLastOperation()
+                .map(BaseOperation::getId)
+                .filter(id -> !Objects.equals(id, lastOperationId))
+                .isPresent();
     }
 
     public final void addOperationListener(OperationListener operationListener) {
@@ -98,12 +94,8 @@ public abstract class Actor {
         delayedActions.removeIf(delayedAction -> Objects.equals(delayedAction.getName(), name));
     }
 
-    protected void payTo(UserAccount receiver, AssetAmount assetAmount) {
-        externalAPI.sendAsset(uTransnetAccount, receiver, assetAmount);
-    }
-
-    protected void payTo(UserAccount receiver, Asset asset, long amount) {
-        externalAPI.sendAsset(uTransnetAccount, receiver, asset, amount);
+    protected void payTo(UserAccount receiver, AssetAmount assetAmount, String memo) {
+        uTransnetAccount.sendAsset(receiver, assetAmount, memo);
     }
 
     protected void addTask(ActorTask task) {
@@ -111,23 +103,9 @@ public abstract class Actor {
     }
 
 
-
-    public boolean equals(Object o) {
-        if (o == this) return true;
-        if (!(o instanceof Actor)) return false;
-        final Actor other = (Actor) o;
-        if (!other.canEqual(this)) return false;
-        final Object this$id = this.getId();
-        final Object other$id = other.getId();
-        return this$id == null ? other$id == null : this$id.equals(other$id);
-    }
-
-    public int hashCode() {
-        final int PRIME = 59;
-        int result = 1;
-        final Object $id = this.getId();
-        result = result * PRIME + ($id == null ? 43 : $id.hashCode());
-        return result;
+    void setUTransnetAccount(@NonNull UserAccount uTransnetAccount) {
+        this.uTransnetAccount = uTransnetAccount;
+        uTransnetAccount.getLastOperation().ifPresent(baseOperation -> lastOperationId = baseOperation.getId());
     }
 
     protected boolean canEqual(Object other) {
