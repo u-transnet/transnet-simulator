@@ -5,15 +5,14 @@ package com.github.utransnet.simulator.externalapi.operations;
  */
 public enum OperationType {
     //TODO: set proper id from graphene
-    TRANSFER(1),
-    MESSAGE(2),
-    PROPOSAL_CREATE_OPERATION(3),
-    PROPOSAL_UPDATE_OPERATION(4),
-    PROPOSAL_DELETE_OPERATION(5);
+    TRANSFER(1, TransferOperation.class),
+    MESSAGE(2, MessageOperation.class);
 
-    int id;
+    public int id;
+    public Class<? extends BaseOperation> clazz;
 
-    OperationType(int id) {
+    OperationType(int id, Class<? extends BaseOperation> clazz) {
         this.id = id;
+        this.clazz = clazz;
     }
 }

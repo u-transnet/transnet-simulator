@@ -1,7 +1,6 @@
 package com.github.utransnet.simulator.testservices;
 
 import com.github.utransnet.simulator.externalapi.*;
-import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOperation;
 
 /**
  * Created by Artem on 09.02.2018.
@@ -15,12 +14,12 @@ public class APIObjectFactoryTestImpl implements APIObjectFactory {
     }
 
     @Override
-    public Asset createAsset(String id) {
+    public Asset getAsset(String id) {
         return () -> id;
     }
 
     @Override
-    public AssetAmount createAssetAmount(Asset asset, long amount) {
+    public AssetAmount getAssetAmount(Asset asset, long amount) {
         return new AssetAmount() {
             @Override
             public Asset getAsset() {
@@ -35,7 +34,7 @@ public class APIObjectFactoryTestImpl implements APIObjectFactory {
     }
 
     @Override
-    public UserAccount createUserAccount(String name) {
+    public UserAccount userAccount(String name) {
         return new UserAccount(externalAPI) {
             @Override
             public String getName() {
@@ -49,13 +48,4 @@ public class APIObjectFactoryTestImpl implements APIObjectFactory {
         };
     }
 
-    @Override
-    public UserAccount createOrGetUserAccount(String name) {
-        return createUserAccount(name);
-    }
-
-    @Override
-    public Proposal convertProposalOperationToProposalObject(ProposalCreateOperation proposalCreateOperation) {
-        return null;
-    }
 }

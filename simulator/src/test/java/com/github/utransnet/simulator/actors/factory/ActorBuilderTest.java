@@ -57,7 +57,7 @@ public class ActorBuilderTest extends SpringTest<ActorBuilderTest.Config> {
     public void testBalance() throws Exception {
         TestActor actor = actorBuilder
                 .id("test")
-                .addAsset(objectFactory.createAssetAmount("test-asset", 10))
+                .addAsset(objectFactory.getAssetAmount("test-asset", 10))
                 .build();
         assertEquals(10L, actor.getBalance("test-asset"));
     }

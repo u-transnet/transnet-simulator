@@ -1,11 +1,8 @@
 package com.github.utransnet.simulator.actors.factory;
 
-import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.*;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NonNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
@@ -64,7 +61,7 @@ public class ActorBuilder<T extends Actor> {
         Assert.notNull(id, "Id of actor must be set");
         T t = newInstance();
         if (uTransnetAccount == null) {
-            uTransnetAccount = objectFactory.createOrGetUserAccount(id);
+            uTransnetAccount = objectFactory.userAccount(id);
         }
         t.setUTransnetAccount(uTransnetAccount);
         t.setBalance(balance);

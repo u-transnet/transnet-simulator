@@ -56,7 +56,7 @@ public class Client extends Actor {
 
                 .name("wait-rail-car")
                 .context(new ActorTaskContext(
-                        OperationType.PROPOSAL_CREATE_OPERATION, //or other type?
+                        OperationType.TRANSFER, //TODO: or other type?
                         this::waitRailCar
                 ))
                 .onEnd(this::tellReadyForTrip)

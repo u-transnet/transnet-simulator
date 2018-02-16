@@ -26,6 +26,7 @@ allprojects {
         commonsLang3Version = '3.7'
         jetbrainsAnnotationsVersion = '15.0'
         jacksonVersion = '2.9.4'
+        h2version = '1.4.196'
     }
 
     repositories {
@@ -42,12 +43,16 @@ project(':simulator'){
 
     dependencies {
         testCompile group: 'junit', name: 'junit', version: junitVersion
-        compile 'org.springframework.boot:spring-boot-starter-web'
         testCompile 'org.springframework.boot:spring-boot-starter-test'
+        compile 'org.springframework.boot:spring-boot-starter-web'
+        compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
         compile group: 'org.jetbrains', name: 'annotations', version: jetbrainsAnnotationsVersion
 
         compile group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
+
+        compile group: 'com.h2database', name: 'h2', version: h2version
+
 
 
 
