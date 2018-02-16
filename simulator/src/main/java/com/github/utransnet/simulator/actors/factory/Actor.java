@@ -8,7 +8,6 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import lombok.*;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -46,7 +45,7 @@ public class Actor {
 
     public void update(int seconds) {
         if (checkNewOperations()) {
-            externalAPI.operationsBefore(lastOperationId)
+            externalAPI.operationsAfter(uTransnetAccount, lastOperationId)
                     .forEach(operation ->
                             operationListeners.stream()
                             .filter(listener ->

@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -13,12 +14,17 @@ import java.util.Optional;
  */
 public class ExternalAPIEmptyImpl extends ExternalAPI {
     @Override
-    public void sendProposal(UserAccount from, UserAccount to, UserAccount proposalCreator, Asset asset, long amount) {
+    public void sendProposal(
+            UserAccount from,
+            UserAccount to,
+            UserAccount proposingAccount,
+            UserAccount feePayer,
+            Asset asset, long amount) {
 
     }
 
     @Override
-    public void approveProposal(UserAccount feePayer, Proposal proposal) {
+    public void approveProposal(UserAccount approvingAccount, Proposal proposal) {
 
     }
 
@@ -38,10 +44,17 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     }
 
     @Override
+    public List<BaseOperation> getAccountHistory(UserAccount account) {
+        return new ArrayList<>(0);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
     public UserAccount createAccount(String name) {
         return null;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount getAccountByName(String name) {
         return null;
@@ -53,18 +66,13 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     }
 
     @Override
-    public List<BaseOperation> operationsBefore(String operationId) {
-        return new LinkedList<>();
+    public List<BaseOperation> operationsAfter(UserAccount account, String operationId) {
+        return new ArrayList<>(0);
     }
 
     @Override
-    public List<BaseOperation> operationsBefore(BaseOperation operation) {
-        return new LinkedList<>();
-    }
-
-    @Override
-    public UserAccount getUserAccountByName(String name) {
-        return null;
+    public List<BaseOperation> operationsAfter(UserAccount account, BaseOperation operation) {
+        return new ArrayList<>(0);
     }
 
 }
