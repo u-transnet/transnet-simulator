@@ -12,13 +12,13 @@ import java.util.function.Consumer;
 @EqualsAndHashCode(of={"name"})
 @AllArgsConstructor
 @Getter
-public class EventListener<T extends OperationEvent> {
+public class EventListener {
 
     private final String name;
     private final OperationEvent.Type eventType;
-    private final Consumer<T> consumer;
+    private final Consumer<OperationEvent> consumer;
 
-    public void fire(T operation) {
+    public void fire(OperationEvent operation) {
         consumer.accept(operation);
     }
 

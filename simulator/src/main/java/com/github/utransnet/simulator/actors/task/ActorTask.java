@@ -12,14 +12,14 @@ import java.util.function.Consumer;
  * Created by Artem on 05.02.2018.
  */
 @Builder
-public class ActorTask<S extends OperationEvent, F extends OperationEvent> {
+public class ActorTask {
 
     @Getter
     private final Actor executor;
     @Getter
     private final String name;
     @Getter
-    private final ActorTaskContext<S, F> context;
+    private final ActorTaskContext context;
     @Nullable
     @Getter
     private ActorTask previous;
@@ -29,13 +29,13 @@ public class ActorTask<S extends OperationEvent, F extends OperationEvent> {
     private ActorTask next;
     @Nullable
     @Getter
-    private Consumer<ActorTaskContext<S, F>> onStart;
+    private Consumer<ActorTaskContext> onStart;
     @Nullable
     @Getter
-    private Consumer<ActorTaskContext<S, F>> onEnd;
+    private Consumer<ActorTaskContext> onEnd;
     @Nullable
     @Getter
-    private Consumer<ActorTaskContext<S, F>> onCancel;
+    private Consumer<ActorTaskContext> onCancel;
 
     @java.beans.ConstructorProperties({
             "previous", "next", "onStart", "onEnd", "onCancel", "executor", "name", "context"
@@ -43,9 +43,9 @@ public class ActorTask<S extends OperationEvent, F extends OperationEvent> {
     private ActorTask(
             @Nullable ActorTask previous,
             @Nullable ActorTask next,
-            @Nullable Consumer<ActorTaskContext<S, F>> onStart,
-            @Nullable Consumer<ActorTaskContext<S, F>> onEnd,
-            @Nullable Consumer<ActorTaskContext<S, F>> onCancel,
+            @Nullable Consumer<ActorTaskContext> onStart,
+            @Nullable Consumer<ActorTaskContext> onEnd,
+            @Nullable Consumer<ActorTaskContext> onCancel,
             Actor executor,
             String name,
             ActorTaskContext context
@@ -65,7 +65,7 @@ public class ActorTask<S extends OperationEvent, F extends OperationEvent> {
             onStart.accept(context);
         }
         if (context.getSuccessPredicate() != null && context.getSuccessEventType() != null) {
-            EventListener sEventListener = new EventListener<S>(
+            EventListener sEventListener = new EventListener(
                     name + "-finish",
                     context.getSuccessEventType(),
                     event -> {
@@ -82,7 +82,7 @@ public class ActorTask<S extends OperationEvent, F extends OperationEvent> {
             executor.addEventListener(sEventListener);
         }
         if (context.getFailPredicate() != null && context.getFailEventType() != null) {
-            EventListener fEventListener = new EventListener<F>(
+            EventListener fEventListener = new EventListener(
                     name + "-cancel",
                     context.getFailEventType(),
                     event -> {

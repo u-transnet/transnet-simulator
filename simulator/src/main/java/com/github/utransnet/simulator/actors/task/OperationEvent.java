@@ -14,43 +14,69 @@ import static com.github.utransnet.simulator.actors.task.OperationEvent.Type.*;
  */
 @Getter
 @AllArgsConstructor
-public class OperationEvent <T> {
+public class OperationEvent {
 
     Type eventType;
 
-    T object;
+    Object object;
 
     public enum Type {
         TRANSFER, MESSAGE, PROPOSAL_CREATE, PROPOSAL_UPDATE, PROPOSAL_DELETE
     }
 
-    public static class ProposalCreateEvent extends OperationEvent<Proposal> {
+    public static class ProposalCreateEvent extends OperationEvent {
         public ProposalCreateEvent(Proposal object) {
             super(PROPOSAL_CREATE, object);
         }
+
+        @Override
+        public Proposal getObject() {
+            return (Proposal) super.getObject();
+        }
     }
 
-    public static class ProposalUpdateEvent extends OperationEvent<Proposal> {
+    public static class ProposalUpdateEvent extends OperationEvent {
         public ProposalUpdateEvent(Proposal object) {
             super(PROPOSAL_UPDATE, object);
         }
+
+        @Override
+        public Proposal getObject() {
+            return (Proposal) super.getObject();
+        }
     }
 
-    public static class ProposalDeleteEvent extends OperationEvent<String> {
+    public static class ProposalDeleteEvent extends OperationEvent {
         public ProposalDeleteEvent(String proposalId) {
             super(PROPOSAL_DELETE, proposalId);
         }
-    }
 
-    public static class TransferEvent extends OperationEvent<TransferOperation> {
-        public TransferEvent(TransferOperation transferOperation) {
-            super(TRANSFER, transferOperation);
+        @Override
+        public String getObject() {
+            return (String) super.getObject();
         }
     }
 
-    public static class MessageEvent extends OperationEvent<MessageOperation> {
+    public static class TransferEvent extends OperationEvent {
+        public TransferEvent(TransferOperation transferOperation) {
+            super(TRANSFER, transferOperation);
+        }
+
+
+        @Override
+        public TransferOperation getObject() {
+            return (TransferOperation) super.getObject();
+        }
+    }
+
+    public static class MessageEvent extends OperationEvent {
         public MessageEvent(MessageOperation messageOperation) {
             super(MESSAGE, messageOperation);
+        }
+
+        @Override
+        public MessageOperation getObject() {
+            return (MessageOperation) super.getObject();
         }
     }
 }

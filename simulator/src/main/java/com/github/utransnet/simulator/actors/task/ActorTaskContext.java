@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
 /**
  * Created by Artem on 05.02.2018.
  */
-public class ActorTaskContext<S extends OperationEvent, F extends OperationEvent> {
+public class ActorTaskContext {
     @Getter
     @Nullable
     private final OperationEvent.Type successEventType;
@@ -24,11 +24,11 @@ public class ActorTaskContext<S extends OperationEvent, F extends OperationEvent
 
     @Getter
     @Nullable
-    private final BiFunction<ActorTaskContext, S, Boolean> successPredicate;
+    private final BiFunction<ActorTaskContext, OperationEvent, Boolean> successPredicate;
 
     @Getter
     @Nullable
-    private final BiFunction<ActorTaskContext, F, Boolean> failPredicate;
+    private final BiFunction<ActorTaskContext, OperationEvent, Boolean> failPredicate;
 
     @Getter
     private final int waitSeconds;
@@ -44,8 +44,8 @@ public class ActorTaskContext<S extends OperationEvent, F extends OperationEvent
     private ActorTaskContext(
             @Nullable OperationEvent.Type successEventType,
             @Nullable OperationEvent.Type failEventType,
-            @Nullable BiFunction<ActorTaskContext, S, Boolean> successPredicate,
-            @Nullable BiFunction<ActorTaskContext, F, Boolean> failPredicate,
+            @Nullable BiFunction<ActorTaskContext, OperationEvent, Boolean> successPredicate,
+            @Nullable BiFunction<ActorTaskContext, OperationEvent, Boolean> failPredicate,
             int waitSeconds
     ) {
         if(successPredicate == null && waitSeconds == 0) {
@@ -62,15 +62,15 @@ public class ActorTaskContext<S extends OperationEvent, F extends OperationEvent
     public ActorTaskContext(
             OperationEvent.Type successEventType,
             OperationEvent.Type failEventType,
-            @Nullable BiFunction<ActorTaskContext, S, Boolean> successPredicate,
-            @Nullable BiFunction<ActorTaskContext, F, Boolean> failPredicate
+            @Nullable BiFunction<ActorTaskContext, OperationEvent, Boolean> successPredicate,
+            @Nullable BiFunction<ActorTaskContext, OperationEvent, Boolean> failPredicate
     ) {
         this(successEventType, failEventType, successPredicate, failPredicate, 0);
     }
 
     public ActorTaskContext(
             OperationEvent.Type successEventType,
-            @Nullable BiFunction<ActorTaskContext, S, Boolean> successPredicate
+            @Nullable BiFunction<ActorTaskContext, OperationEvent, Boolean> successPredicate
     ) {
         this(successEventType, null, successPredicate, null, 0);
     }
@@ -93,8 +93,4 @@ public class ActorTaskContext<S extends OperationEvent, F extends OperationEvent
         return this;
     }
 
-
-    public static ActorTaskContext immediate() {
-        return new ActorTaskContext(1);
-    }
 }
