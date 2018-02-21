@@ -217,7 +217,18 @@ public class ExternalAPIH2 extends ExternalAPI {
         accountUpdateListeners.values()
                 .forEach(listener -> accsToNotify.forEach(account -> {
                     if(listener.accsToListen.contains(account)) {
-                        listener.fire(() -> this.getAccountHistory(apiObjectFactory.userAccount(account)).size());
+                        UserAccount userAccount = apiObjectFactory.userAccount(account);
+                        listener.fire(new AccountUpdateObject() {
+                            @Override
+                            public int getTotalOperations() {
+                                return getAccountHistory(userAccount).size();
+                            }
+
+                            @Override
+                            public UserAccount getUpdatedAccount() {
+                                return userAccount;
+                            }
+                        });
                     }
                 }));
     }

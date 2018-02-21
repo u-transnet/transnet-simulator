@@ -251,12 +251,18 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
         externalAPI.listenAccountUpdates(
                 "from",
                 Stream.of(from).collect(Collectors.toSet()),
-                accountUpdateObject -> updatesCount[0]++
+                accountUpdateObject -> {
+                    updatesCount[0]++;
+                    assertEquals(from, accountUpdateObject.getUpdatedAccount());
+                }
         );
         externalAPI.listenAccountUpdates(
                 "to",
                 Stream.of(to).collect(Collectors.toSet()),
-                accountUpdateObject -> updatesCount[0]++
+                accountUpdateObject -> {
+                    updatesCount[0]++;
+                    assertEquals(to, accountUpdateObject.getUpdatedAccount());
+                }
         );
         externalAPI.sendMessage(from, to, msg);
         assertEquals(2, updatesCount[0]);

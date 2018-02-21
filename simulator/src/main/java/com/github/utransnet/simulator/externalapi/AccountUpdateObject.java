@@ -5,4 +5,5 @@ package com.github.utransnet.simulator.externalapi;
  */
 public interface AccountUpdateObject {
     int getTotalOperations();
+    UserAccount getUpdatedAccount();
 }
