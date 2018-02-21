@@ -9,27 +9,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * Created by Artem on 05.02.2018.
  */
-public class ActorTaskContext {
+public class ActorTaskContext<S extends OperationEvent, F extends OperationEvent> {
     @Getter
     @Nullable
-    private final OperationType successOperationType;
+    private final OperationEvent.Type successEventType;
 
     @Getter
     @Nullable
-    private final OperationType failOperationType;
+    private final OperationEvent.Type failEventType;
 
     @Getter
     @Nullable
-    private final BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate;
+    private final BiFunction<ActorTaskContext, S, Boolean> successPredicate;
 
     @Getter
     @Nullable
-    private final BiFunction<ActorTaskContext, BaseOperation, Boolean> failPredicate;
+    private final BiFunction<ActorTaskContext, F, Boolean> failPredicate;
 
     @Getter
     private final int waitSeconds;
@@ -43,17 +42,17 @@ public class ActorTaskContext {
 
 
     private ActorTaskContext(
-            @Nullable OperationType successOperationType,
-            @Nullable OperationType failOperationType,
-            @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate,
-            @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> failPredicate,
+            @Nullable OperationEvent.Type successEventType,
+            @Nullable OperationEvent.Type failEventType,
+            @Nullable BiFunction<ActorTaskContext, S, Boolean> successPredicate,
+            @Nullable BiFunction<ActorTaskContext, F, Boolean> failPredicate,
             int waitSeconds
     ) {
         if(successPredicate == null && waitSeconds == 0) {
             throw new RuntimeException("At least one finish condition should be set");
         }
-        this.successOperationType = successOperationType;
-        this.failOperationType = failOperationType;
+        this.successEventType = successEventType;
+        this.failEventType = failEventType;
         this.successPredicate = successPredicate;
         this.failPredicate = failPredicate;
         this.waitSeconds = waitSeconds;
@@ -61,19 +60,19 @@ public class ActorTaskContext {
     }
 
     public ActorTaskContext(
-            OperationType successOperationType,
-            OperationType failOperationType,
-            @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate,
-            @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> failPredicate
+            OperationEvent.Type successEventType,
+            OperationEvent.Type failEventType,
+            @Nullable BiFunction<ActorTaskContext, S, Boolean> successPredicate,
+            @Nullable BiFunction<ActorTaskContext, F, Boolean> failPredicate
     ) {
-        this(successOperationType, failOperationType, successPredicate, failPredicate, 0);
+        this(successEventType, failEventType, successPredicate, failPredicate, 0);
     }
 
     public ActorTaskContext(
-            OperationType operationType,
-            @Nullable BiFunction<ActorTaskContext, BaseOperation, Boolean> successPredicate
+            OperationEvent.Type successEventType,
+            @Nullable BiFunction<ActorTaskContext, S, Boolean> successPredicate
     ) {
-        this(operationType, null, successPredicate, null, 0);
+        this(successEventType, null, successPredicate, null, 0);
     }
 
     public ActorTaskContext(int waitSeconds) {

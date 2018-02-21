@@ -12,14 +12,14 @@ import java.util.function.Consumer;
  * Created by Artem on 05.02.2018.
  */
 @Builder
-public class ActorTask {
+public class ActorTask<S extends OperationEvent, F extends OperationEvent> {
 
     @Getter
     private final Actor executor;
     @Getter
     private final String name;
     @Getter
-    private final ActorTaskContext context;
+    private final ActorTaskContext<S, F> context;
     @Nullable
     @Getter
     private ActorTask previous;
@@ -29,13 +29,13 @@ public class ActorTask {
     private ActorTask next;
     @Nullable
     @Getter
-    private Consumer<ActorTaskContext> onStart;
+    private Consumer<ActorTaskContext<S, F>> onStart;
     @Nullable
     @Getter
-    private Consumer<ActorTaskContext> onEnd;
+    private Consumer<ActorTaskContext<S, F>> onEnd;
     @Nullable
     @Getter
-    private Consumer<ActorTaskContext> onCancel;
+    private Consumer<ActorTaskContext<S, F>> onCancel;
 
     @java.beans.ConstructorProperties({
             "previous", "next", "onStart", "onEnd", "onCancel", "executor", "name", "context"
@@ -43,9 +43,9 @@ public class ActorTask {
     private ActorTask(
             @Nullable ActorTask previous,
             @Nullable ActorTask next,
-            @Nullable Consumer<ActorTaskContext> onStart,
-            @Nullable Consumer<ActorTaskContext> onEnd,
-            @Nullable Consumer<ActorTaskContext> onCancel,
+            @Nullable Consumer<ActorTaskContext<S, F>> onStart,
+            @Nullable Consumer<ActorTaskContext<S, F>> onEnd,
+            @Nullable Consumer<ActorTaskContext<S, F>> onCancel,
             Actor executor,
             String name,
             ActorTaskContext context
@@ -64,13 +64,13 @@ public class ActorTask {
         if (onStart != null) {
             onStart.accept(context);
         }
-        if (context.getSuccessPredicate() != null && context.getSuccessOperationType() != null) {
-            executor.addOperationListener(new OperationListener(
+        if (context.getSuccessPredicate() != null && context.getSuccessEventType() != null) {
+            EventListener sEventListener = new EventListener<S>(
                     name + "-finish",
-                    context.getSuccessOperationType(),
-                    operation -> {
+                    context.getSuccessEventType(),
+                    event -> {
                         try {
-                            if (context.getSuccessPredicate().apply(context, operation)) {
+                            if (context.getSuccessPredicate().apply(context, event)) {
                                 finish();
                             }
                         } catch (Exception e) {
@@ -78,18 +78,20 @@ public class ActorTask {
                             cancel();
                         }
                     }
-            ));
+            );
+            executor.addEventListener(sEventListener);
         }
-        if (context.getFailPredicate() != null && context.getFailOperationType() != null) {
-            executor.addOperationListener(new OperationListener(
+        if (context.getFailPredicate() != null && context.getFailEventType() != null) {
+            EventListener fEventListener = new EventListener<F>(
                     name + "-cancel",
-                    context.getFailOperationType(),
-                    operation -> {
-                        if (context.getFailPredicate().apply(context, operation)) {
+                    context.getFailEventType(),
+                    event -> {
+                        if (context.getFailPredicate().apply(context, event)) {
                             cancel();
                         }
                     }
-            ));
+            );
+            executor.addEventListener(fEventListener);
         }
         if (context.getWaitSeconds() > 0) {
             executor.addDelayedAction(new DelayedAction(

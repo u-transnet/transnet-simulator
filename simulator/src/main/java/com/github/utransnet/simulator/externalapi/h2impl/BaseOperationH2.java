@@ -1,6 +1,7 @@
 package com.github.utransnet.simulator.externalapi.h2impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import lombok.AccessLevel;
@@ -15,6 +16,7 @@ import java.time.Instant;
  */
 @MappedSuperclass
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
+@JsonIgnoreProperties("operationType")
 public abstract class BaseOperationH2 implements BaseOperation {
 
     @Transient
@@ -42,4 +44,6 @@ public abstract class BaseOperationH2 implements BaseOperation {
     public String getId() {
         return String.valueOf(id);
     }
+
+
 }

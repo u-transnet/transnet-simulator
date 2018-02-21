@@ -12,4 +12,9 @@ public interface MessageOperation extends BaseOperation {
     UserAccount getTo();
     UserAccount getFrom();
     String getMessage();
+
+    @Override
+    default OperationType getOperationType() {
+        return OperationType.MESSAGE;
+    }
 }
