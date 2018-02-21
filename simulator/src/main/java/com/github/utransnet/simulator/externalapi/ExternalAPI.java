@@ -7,7 +7,12 @@ import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Created by Artem on 31.01.2018.
@@ -38,7 +43,7 @@ public abstract class ExternalAPI {
                 .stream()
                 .filter(baseOperation -> baseOperation.getClass().equals(operationType.clazz))
                 .map(baseOperation -> (T) baseOperation)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
     public List<TransferOperation> getAccountTransfers(UserAccount account) {
         return filterHistory(account, OperationType.TRANSFER);
@@ -60,4 +65,42 @@ public abstract class ExternalAPI {
         return operationsAfter(account, operation.getId());
     }
 
+
+    //region listeners
+    public abstract void listenAccountUpdatesByUserId(
+            String listenerId,
+            Set<String> accsToListen,
+            Consumer<AccountUpdateObject> onUpdate
+    );
+    public void listenAccountUpdates(
+            String listenerId,
+            Set<UserAccount> accsToListen,
+            Consumer<AccountUpdateObject> onUpdate
+    ){
+        listenAccountUpdatesByUserId(
+                listenerId,
+                accsToListen.stream().map(UserAccount::getId).collect(toSet()),
+                onUpdate
+        );
+    }
+    public abstract void removeAccountUpdateListener(String listenerId);
+
+    public abstract void listenAccountOperationsByUserId(
+            String listenerId,
+            Set<String> accsToListen,
+            Consumer<ExternalObject> onUpdate
+    );
+    public void listenAccountOperations(
+            String listenerId,
+            Set<UserAccount> accsToListen,
+            Consumer<ExternalObject> onUpdate){
+        listenAccountOperationsByUserId(
+                listenerId,
+                accsToListen.stream().map(UserAccount::getId).collect(toSet()),
+                onUpdate
+        );
+    }
+    public abstract void removeAccountOperationListener(String listenerId);
+
+    //endregion
 }

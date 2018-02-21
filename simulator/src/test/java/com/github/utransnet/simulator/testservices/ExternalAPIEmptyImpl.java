@@ -4,10 +4,8 @@ import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Created by Artem on 12.02.2018.
@@ -73,6 +71,26 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     @Override
     public List<BaseOperation> operationsAfter(UserAccount account, BaseOperation operation) {
         return new ArrayList<>(0);
+    }
+
+    @Override
+    public void listenAccountUpdatesByUserId(String listenerId, Set<String> accsToListen, Consumer<AccountUpdateObject> onUpdate) {
+
+    }
+
+    @Override
+    public void removeAccountUpdateListener(String listenerId) {
+
+    }
+
+    @Override
+    public void listenAccountOperationsByUserId(String listenerId, Set<String> accsToListen, Consumer<ExternalObject> onUpdate) {
+
+    }
+
+    @Override
+    public void removeAccountOperationListener(String listenerId) {
+
     }
 
 }

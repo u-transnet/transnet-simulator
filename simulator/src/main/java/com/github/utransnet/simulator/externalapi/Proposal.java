@@ -7,9 +7,7 @@ import java.util.List;
 /**
  * Created by Artem on 07.02.2018.
  */
-public interface Proposal {
-
-    String getId();
+public interface Proposal extends ExternalObject {
 
     boolean approved();
 
