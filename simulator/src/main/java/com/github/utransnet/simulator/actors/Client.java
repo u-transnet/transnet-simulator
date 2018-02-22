@@ -92,7 +92,7 @@ public class Client extends Actor {
 
     //region start trip
     private void requestTrip(ActorTaskContext context) {
-        RouteMap routeMap = getRouteMap(context);
+        RouteMap routeMap = getRouteMap();
         getUTransnetAccount().sendMessage(routeMap.getStart(), routeMapFactory.toJson(routeMap));
     }
 
@@ -107,7 +107,7 @@ public class Client extends Actor {
             Proposal proposal = proposalCreateEvent.getObject();
             BaseOperation operation = proposal.getOperation();
 
-            RouteMap routeMap = getRouteMap(context);
+            RouteMap routeMap = getRouteMap();
 
             if(operation instanceof TransferOperation) {
                 TransferOperation transferOperation = (TransferOperation) operation;
@@ -121,13 +121,13 @@ public class Client extends Actor {
     }
 
     private void tellReadyForTrip(ActorTaskContext context) {
-        RouteMap routeMap = getRouteMap(context);
+        RouteMap routeMap = getRouteMap();
         Proposal proposal = Utils.getLast(getUTransnetAccount().getProposalsFrom(routeMap.getStart()));
         getUTransnetAccount().approveProposal(proposal);
     }
 
     private void tellInRailCar(ActorTaskContext context) {
-        RouteMap routeMap = getRouteMap(context);
+        RouteMap routeMap = getRouteMap();
         TransferOperation payForTrip = Utils.getLast(getUTransnetAccount().getTransfersFrom(routeMap.getStart()));
         String railcCarName = payForTrip.getMemo();
         UserAccount railCarAccount = getExternalAPI().getAccountByName(railcCarName);
@@ -140,13 +140,13 @@ public class Client extends Actor {
     }
 
 
-    private RouteMap getRouteMap(ActorTaskContext context) {
+    protected RouteMap getRouteMap() {
         UserAccount logistAccount = getLogist();
         TransferOperation transferOperation = Utils.getLast(getUTransnetAccount().getTransfersFrom(logistAccount));
         return routeMapFactory.fromJson(transferOperation.getMemo());
     }
 
-    private UserAccount getLogist() {
+    protected UserAccount getLogist() {
         return getExternalAPI().getAccountByName(logistName);
     }
 

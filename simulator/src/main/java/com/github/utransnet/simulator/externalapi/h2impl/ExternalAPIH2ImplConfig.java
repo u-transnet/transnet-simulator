@@ -45,6 +45,7 @@ public class ExternalAPIH2ImplConfig {
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     UserAccount userAccount(ExternalAPI externalAPI) {
         return new UserAccountH2(externalAPI);

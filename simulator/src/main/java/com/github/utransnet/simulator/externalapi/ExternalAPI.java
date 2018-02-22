@@ -4,6 +4,8 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import lombok.NonNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,11 +60,16 @@ public abstract class ExternalAPI {
 
     public abstract UserAccount createAccount(String name);
     public abstract UserAccount getAccountByName(String name);
+    public abstract UserAccount getAccountById(String name);
 
     public abstract Optional<? extends BaseOperation> getLastOperation(UserAccount account);
     public abstract List<? extends BaseOperation> operationsAfter(UserAccount account, String operationId);
-    public List<? extends BaseOperation> operationsAfter(UserAccount account, BaseOperation operation) {
-        return operationsAfter(account, operation.getId());
+    public List<? extends BaseOperation> operationsAfter(UserAccount account, @Nullable BaseOperation operation) {
+        if (operation != null){
+            return operationsAfter(account, operation.getId());
+        } else {
+            return operationsAfter(account, "");
+        }
     }
 
 

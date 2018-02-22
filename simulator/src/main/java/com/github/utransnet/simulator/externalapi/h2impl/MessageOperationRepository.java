@@ -11,4 +11,6 @@ import java.util.List;
  */
 public interface MessageOperationRepository extends CrudRepository<MessageOperationH2, String> {
     List<MessageOperationH2> findByToOrFrom(String to, String from);
+    List<MessageOperationH2> findByTo(String to);
+    List<MessageOperationH2> findByFrom(String from);
 }

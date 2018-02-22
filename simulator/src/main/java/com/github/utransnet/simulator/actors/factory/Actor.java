@@ -1,6 +1,7 @@
 package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.actors.task.*;
+import com.github.utransnet.simulator.actors.task.EventListener;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.Proposal;
@@ -9,10 +10,7 @@ import com.github.utransnet.simulator.externalapi.operations.*;
 import lombok.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractQueue;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -25,7 +23,7 @@ public class Actor {
     private final ExternalAPI externalAPI;
 
     private final Set<OperationListener> operationListeners = new HashSet<>(16);
-    private final Set<EventListener<OperationEvent>> eventListeners = new HashSet<>(16);
+    private final Set<EventListener> eventListeners = new HashSet<>(16);
 
     private final Set<DelayedAction> delayedActions = new HashSet<>(16);
     private final AbstractQueue<ActorTask> tasksQueue = new LinkedBlockingQueue<>(100);
@@ -47,6 +45,7 @@ public class Actor {
     }
 
     public void update(int seconds) {
+        String lastOperationId = this.lastOperationId;
         if (checkNewOperations()) {
             externalAPI.operationsAfter(uTransnetAccount, lastOperationId)
                     .forEach(this::processEachOperation);
@@ -132,11 +131,15 @@ public class Actor {
 
 
     protected boolean checkNewOperations() {
-        return uTransnetAccount
-                .getLastOperation()
-                .map(BaseOperation::getId)
-                .filter(id -> !Objects.equals(id, lastOperationId))
-                .isPresent();
+        Optional<? extends BaseOperation> lastOperation = uTransnetAccount.getLastOperation();
+        if (lastOperation.isPresent()){
+            BaseOperation operation = lastOperation.get();
+            if (!Objects.equals(operation.getId(), lastOperationId)){
+                lastOperationId = operation.getId();
+                return true;
+            }
+        }
+        return false;
     }
 
     public final void addOperationListener(OperationListener operationListener) {
@@ -147,7 +150,7 @@ public class Actor {
         operationListeners.removeIf(listener -> Objects.equals(listener.getName(), name));
     }
 
-    public final void addEventListener(EventListener<OperationEvent> operationListener) {
+    public final void addEventListener(EventListener operationListener) {
         eventListeners.add(operationListener);
     }
 
