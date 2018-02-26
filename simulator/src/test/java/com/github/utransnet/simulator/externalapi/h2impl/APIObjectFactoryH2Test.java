@@ -46,8 +46,12 @@ public class APIObjectFactoryH2Test extends SpringTest<APIObjectFactoryH2Test.Co
 
     @Test
     public void userAccount() throws Exception {
-        UserAccount userAccount = apiObjectFactory.userAccount("test-user");
-        assertEquals("test-user", userAccount.getId());
+        UserAccount userAccount1 = apiObjectFactory.userAccount("test-user");
+        assertEquals("test-user", userAccount1.getId());
+        UserAccount userAccount2 = apiObjectFactory.userAccount("test-user");
+        assertEquals(userAccount1, userAccount2);
+        UserAccount userAccount3 = apiObjectFactory.userAccount("other-user");
+        assertNotEquals(userAccount1, userAccount3);
     }
 
     @Override
@@ -72,6 +76,7 @@ public class APIObjectFactoryH2Test extends SpringTest<APIObjectFactoryH2Test.Co
         }
 
         @Bean
+        @Scope("prototype")
         @Autowired
         UserAccount userAccount(ExternalAPI externalAPI) {
             return new UserAccountH2(externalAPI);

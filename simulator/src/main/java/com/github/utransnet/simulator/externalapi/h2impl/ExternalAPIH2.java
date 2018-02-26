@@ -145,7 +145,10 @@ public class ExternalAPIH2 extends ExternalAPI {
         ArrayList<BaseOperationH2> operations = new ArrayList<>();
         operations.addAll(transferOperationRepository.findByToOrFrom(account.getId(), account.getId()));
         operations.addAll(messageOperationRepository.findByToOrFrom(account.getId(), account.getId()));
-        return operations.stream().sorted(Comparator.comparing(o -> o.creationDate)).collect(Collectors.toList());
+        return operations.stream()
+                .peek(op -> op.setApiObjectFactory(apiObjectFactory))
+                .sorted(Comparator.comparing(o -> o.creationDate))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -155,6 +158,11 @@ public class ExternalAPIH2 extends ExternalAPI {
 
     @Override
     public UserAccount getAccountByName(String name) {
+        return createAccount(name);
+    }
+
+    @Override
+    public UserAccount getAccountById(String name) {
         return createAccount(name);
     }
 
@@ -171,15 +179,20 @@ public class ExternalAPIH2 extends ExternalAPI {
     @Override
     public List<? extends BaseOperation> operationsAfter(UserAccount account, String operationId) {
         List<? extends BaseOperation> history = getAccountHistory(account);
-        Optional<? extends BaseOperation> operation = history
-                .stream()
-                .filter(o -> Objects.equals(o.getId(), operationId))
-                .findFirst();
-        return operation
-                .<List<? extends BaseOperation>>map(
-                        baseOperation -> history.subList(history.indexOf(baseOperation), history.size() - 1)
-                )
-                .orElseGet(() -> new ArrayList<>(0));
+        ArrayList<BaseOperation> operationAfter = new ArrayList<>(history.size());
+        final boolean[] newer = {false};
+        if (operationId == null || operationId.isEmpty()){
+            newer[0] = true;
+        }
+        history.forEach(o -> {
+            if (newer[0]){
+                operationAfter.add(o);
+            }
+            if(o.getId().equals(operationId)) {
+                newer[0] = true;
+            }
+        });
+        return operationAfter;
     }
 
     @Override

@@ -16,11 +16,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 /**
@@ -120,90 +122,40 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
 
         long messagesCount = externalAPI.getAccountHistory(from)
                 .stream()
-                .map(o -> (BaseOperationH2) o)
-                .peek(o -> o.setApiObjectFactory(apiObjectFactory))
                 .filter(o -> o.getOperationType() == OperationType.MESSAGE)
                 .map(o -> (MessageOperation) o)
                 .filter(messageOperation ->
-                        messageOperation.getFrom() == from &&
-                                messageOperation.getTo() == to &&
+                        Objects.equals(messageOperation.getFrom(), from) &&
+                                Objects.equals(messageOperation.getTo(), to) &&
                                 Objects.equals(messageOperation.getMessage(), msg)
 
                                 ||
-                                messageOperation.getFrom() == to &&
-                                        messageOperation.getTo() == from &&
+                                Objects.equals(messageOperation.getFrom(), to) &&
+                                        Objects.equals(messageOperation.getTo(), from) &&
                                         Objects.equals(messageOperation.getMessage(), msg + msg)
                 ).count();
         assertEquals(2, messagesCount);
 
         long transfersCount = externalAPI.getAccountHistory(from)
                 .stream()
-                .map(o -> (BaseOperationH2) o)
-                .peek(o -> o.setApiObjectFactory(apiObjectFactory))
                 .filter(o -> o.getOperationType() == OperationType.TRANSFER)
                 .map(o -> (TransferOperation) o)
                 .filter(messageOperation ->
-                        messageOperation.getFrom() == from &&
-                                messageOperation.getTo() == to &&
+                        Objects.equals(messageOperation.getFrom(), from) &&
+                                Objects.equals(messageOperation.getTo(), to) &&
                                 Objects.equals(messageOperation.getMemo(), msg)
 
                                 ||
-                                messageOperation.getFrom() == to &&
-                                        messageOperation.getTo() == from &&
+                                Objects.equals(messageOperation.getFrom(), to) &&
+                                        Objects.equals(messageOperation.getTo(), from) &&
                                         Objects.equals(messageOperation.getMemo(), msg + msg)
                 ).count();
         assertEquals(2, transfersCount);
-    }
 
-    @Test
-    public void getAccountHistory1() throws Exception {
-        prepareAccounts();
-        assertEquals(0, externalAPI.getAccountHistory(from).size());
-        externalAPI.sendMessage(from, to, msg);
-        assertEquals(1, externalAPI.getAccountHistory(from).size());
-        externalAPI.sendMessage(to, from, msg + msg);
-        assertEquals(2, externalAPI.getAccountHistory(from).size());
 
-        externalAPI.sendAsset(from, to, assetAmount, msg);
-        assertEquals(3, externalAPI.getAccountHistory(from).size());
-        externalAPI.sendAsset(to, from, assetAmount, msg + msg);
+        externalAPI.sendAsset(approvingAcc, to, assetAmount, msg);
+        // history shouldn't be changed
         assertEquals(4, externalAPI.getAccountHistory(from).size());
-
-        long messagesCount = externalAPI.getAccountHistory(from, OperationType.MESSAGE)
-                .stream()
-                .map(o -> (BaseOperationH2) o)
-                .peek(o -> o.setApiObjectFactory(apiObjectFactory))
-                .filter(o -> o.getOperationType() == OperationType.MESSAGE)
-                .map(o -> (MessageOperation) o)
-                .filter(messageOperation ->
-                        messageOperation.getFrom() == from &&
-                                messageOperation.getTo() == to &&
-                                Objects.equals(messageOperation.getMessage(), msg)
-
-                                ||
-                                messageOperation.getFrom() == to &&
-                                        messageOperation.getTo() == from &&
-                                        Objects.equals(messageOperation.getMessage(), msg + msg)
-                ).count();
-        assertEquals(2, messagesCount);
-
-        long transfersCount = externalAPI.getAccountHistory(from, OperationType.TRANSFER)
-                .stream()
-                .map(o -> (BaseOperationH2) o)
-                .peek(o -> o.setApiObjectFactory(apiObjectFactory))
-                .filter(o -> o.getOperationType() == OperationType.TRANSFER)
-                .map(o -> (TransferOperation) o)
-                .filter(messageOperation ->
-                        messageOperation.getFrom() == from &&
-                                messageOperation.getTo() == to &&
-                                Objects.equals(messageOperation.getMemo(), msg)
-
-                                ||
-                                messageOperation.getFrom() == to &&
-                                        messageOperation.getTo() == from &&
-                                        Objects.equals(messageOperation.getMemo(), msg + msg)
-                ).count();
-        assertEquals(2, transfersCount);
     }
 
     @Test
@@ -228,6 +180,14 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
 
         externalAPI.sendMessage(from, to, msg);
         assertNotEquals(lastOperation1.get().getId(), externalAPI.getLastOperation(from).get().getId());
+
+
+        lastOperation1 = externalAPI.getLastOperation(from);
+        //noinspection ConstantConditions
+        assertEquals(lastOperation1.get().getId(), externalAPI.getLastOperation(from).get().getId());
+        externalAPI.sendMessage(approvingAcc, to, msg);
+        //noinspection ConstantConditions
+        assertEquals(lastOperation1.get().getId(), externalAPI.getLastOperation(from).get().getId());
     }
 
     @Test
@@ -238,10 +198,22 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
         assertEquals(0, externalAPI.operationsAfter(from, baseOperation1).size());
 
         externalAPI.sendMessage(from, to, msg);
+        @SuppressWarnings("ConstantConditions") BaseOperation baseOperation2 = externalAPI.getLastOperation(from).get();
         assertEquals(1, externalAPI.operationsAfter(from, baseOperation1).size());
-        assertEquals(baseOperation1.getId(), externalAPI.operationsAfter(from, baseOperation1).get(0).getId());
+        assertEquals(baseOperation2.getId(), externalAPI.operationsAfter(from, baseOperation1).get(0).getId());
+
 
         externalAPI.sendMessage(from, to, msg);
+        @SuppressWarnings("ConstantConditions") BaseOperation baseOperation3 = externalAPI.getLastOperation(from).get();
+        List<? extends BaseOperation> after = externalAPI.operationsAfter(from, baseOperation1);
+        assertEquals(2, after.size());
+        assertEquals(baseOperation2.getId(), externalAPI.operationsAfter(from, baseOperation1).get(0).getId());
+        assertEquals(baseOperation3.getId(), externalAPI.operationsAfter(from, baseOperation1).get(1).getId());
+
+        assertThat(externalAPI.operationsAfter(from, baseOperation1), is(after));
+
+        assertEquals(3, externalAPI.operationsAfter(from, (BaseOperation) null).size());
+        assertEquals(3, externalAPI.operationsAfter(from, "").size());
     }
 
     @Test

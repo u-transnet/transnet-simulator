@@ -58,6 +58,12 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
         return null;
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public UserAccount getAccountById(String name) {
+        return null;
+    }
+
     @Override
     public Optional<BaseOperation> getLastOperation(UserAccount account) {
         return Optional.empty();
