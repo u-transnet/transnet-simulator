@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.Utils;
 import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
+import com.github.utransnet.simulator.actors.task.OperationEvent;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.Proposal;
@@ -41,7 +42,7 @@ public class Client extends Actor {
         ActorTask buyRoputeMapTask = ActorTask.builder()
                 .name("buy-route-map")
                 .context(new ActorTaskContext(
-                        OperationType.MESSAGE,
+                        OperationEvent.Type.MESSAGE,
                         this::checkReceivedRouteMap
                 ))
                 .onStart(this::buyRouteMap)
@@ -56,7 +57,7 @@ public class Client extends Actor {
 
                 .name("wait-rail-car")
                 .context(new ActorTaskContext(
-                        OperationType.TRANSFER, //TODO: or other type?
+                        OperationEvent.Type.PROPOSAL_CREATE,
                         this::waitRailCar
                 ))
                 .onEnd(this::tellReadyForTrip)
@@ -77,10 +78,10 @@ public class Client extends Actor {
 
     }
 
-    private boolean checkReceivedRouteMap(ActorTaskContext context, BaseOperation baseOperation) {
-        if (baseOperation instanceof MessageOperation) {
-            MessageOperation operation = (MessageOperation) baseOperation;
-            if (operation.getFrom().equals(getLogist())) {
+    private boolean checkReceivedRouteMap(ActorTaskContext context, OperationEvent event) {
+        if (event instanceof MessageOperation) {
+            OperationEvent.MessageEvent messageEvent = (OperationEvent.MessageEvent) event;
+            if (messageEvent.getObject().getFrom().equals(getLogist())) {
                 return true;
             }
         }
@@ -100,8 +101,22 @@ public class Client extends Actor {
 
     }
 
-    private boolean waitRailCar(ActorTaskContext context, BaseOperation baseOperation) {
-        //TODO check incoming proposal
+    private boolean waitRailCar(ActorTaskContext context, OperationEvent event) {
+        if (event instanceof OperationEvent.ProposalCreateEvent) {
+            OperationEvent.ProposalCreateEvent proposalCreateEvent = (OperationEvent.ProposalCreateEvent) event;
+            Proposal proposal = proposalCreateEvent.getObject();
+            BaseOperation operation = proposal.getOperation();
+
+            RouteMap routeMap = getRouteMap(context);
+
+            if(operation instanceof TransferOperation) {
+                TransferOperation transferOperation = (TransferOperation) operation;
+                if (transferOperation.getFrom().equals(getUTransnetAccount())
+                        && transferOperation.getTo().equals(routeMap.getStart())) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

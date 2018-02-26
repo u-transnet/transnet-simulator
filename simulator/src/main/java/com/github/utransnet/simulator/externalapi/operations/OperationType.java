@@ -6,7 +6,10 @@ package com.github.utransnet.simulator.externalapi.operations;
 public enum OperationType {
     //TODO: set proper id from graphene
     TRANSFER(1, TransferOperation.class),
-    MESSAGE(2, MessageOperation.class);
+    MESSAGE(2, MessageOperation.class),
+    PROPOSAL_UPDATE(3, ProposalUpdateOperation.class),
+    PROPOSAL_CREATE(4, ProposalUpdateOperation.class),
+    PROPOSAL_DELETE(5, ProposalDeleteOperation.class);
 
     public int id;
     public Class<? extends BaseOperation> clazz;

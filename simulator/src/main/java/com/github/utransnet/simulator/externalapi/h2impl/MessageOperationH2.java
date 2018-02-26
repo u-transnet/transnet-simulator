@@ -71,10 +71,4 @@ public class MessageOperationH2 extends BaseOperationH2 implements MessageOperat
     public String getMessage() {
         return message;
     }
-
-    @JsonIgnore
-    @Override
-    public OperationType getOperationType() {
-        return OperationType.MESSAGE;
-    }
 }

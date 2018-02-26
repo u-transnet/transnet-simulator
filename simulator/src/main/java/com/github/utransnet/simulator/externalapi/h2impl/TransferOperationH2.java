@@ -76,11 +76,6 @@ public class TransferOperationH2 extends BaseOperationH2 implements TransferOper
         return memo;
     }
 
-    @JsonIgnore
-    @Override
-    public OperationType getOperationType() {
-        return OperationType.TRANSFER;
-    }
 
     @JsonCreator
     TransferOperationH2(

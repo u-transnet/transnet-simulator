@@ -3,6 +3,7 @@ package com.github.utransnet.simulator.actors;
 import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
+import com.github.utransnet.simulator.actors.task.OperationEvent;
 import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
@@ -67,14 +68,14 @@ public class Logist extends Actor {
     }
 
     private void sendRouteMap(ActorTaskContext context) {
-        RouteMap routeMap = context.getPayload("route-map");
-        UserAccount client = context.getPayload("client");
+        RouteMap routeMap = context.<RouteMap>getPayload("route-map");
+        UserAccount client = context.<UserAccount>getPayload("client");
         getUTransnetAccount().sendMessage(client, routeMapFactory.toJson(routeMap));
     }
 
     private void cancelRouteMapCreation(ActorTaskContext context) {
-        UserAccount client = context.getPayload("client");
-        AssetAmount assetAmount = context.getPayload("paid-asset");
+        UserAccount client = context.<UserAccount>getPayload("client");
+        AssetAmount assetAmount = context.<AssetAmount>getPayload("paid-asset");
         getUTransnetAccount().sendAsset(client, assetAmount, "");
     }
 }

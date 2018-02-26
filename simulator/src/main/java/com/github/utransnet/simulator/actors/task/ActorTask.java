@@ -64,13 +64,13 @@ public class ActorTask {
         if (onStart != null) {
             onStart.accept(context);
         }
-        if (context.getSuccessPredicate() != null && context.getSuccessOperationType() != null) {
-            executor.addOperationListener(new OperationListener(
+        if (context.getSuccessPredicate() != null && context.getSuccessEventType() != null) {
+            EventListener sEventListener = new EventListener(
                     name + "-finish",
-                    context.getSuccessOperationType(),
-                    operation -> {
+                    context.getSuccessEventType(),
+                    event -> {
                         try {
-                            if (context.getSuccessPredicate().apply(context, operation)) {
+                            if (context.getSuccessPredicate().apply(context, event)) {
                                 finish();
                             }
                         } catch (Exception e) {
@@ -78,18 +78,20 @@ public class ActorTask {
                             cancel();
                         }
                     }
-            ));
+            );
+            executor.addEventListener(sEventListener);
         }
-        if (context.getFailPredicate() != null && context.getFailOperationType() != null) {
-            executor.addOperationListener(new OperationListener(
+        if (context.getFailPredicate() != null && context.getFailEventType() != null) {
+            EventListener fEventListener = new EventListener(
                     name + "-cancel",
-                    context.getFailOperationType(),
-                    operation -> {
-                        if (context.getFailPredicate().apply(context, operation)) {
+                    context.getFailEventType(),
+                    event -> {
+                        if (context.getFailPredicate().apply(context, event)) {
                             cancel();
                         }
                     }
-            ));
+            );
+            executor.addEventListener(fEventListener);
         }
         if (context.getWaitSeconds() > 0) {
             executor.addDelayedAction(new DelayedAction(
