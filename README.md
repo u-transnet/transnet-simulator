@@ -10,7 +10,7 @@
 ## Архитектура решения
 * [Работа с маршрутной картой](concept/docs/Route_Map.md) ✔
 * [Процесс заказа (подачи) вагона](concept/docs/Boarding.md)
-* [Определение положения контейнера на пути](concept/docs/Locating) ✔
+* [Определение положения контейнера на пути](concept/docs/Locating.md) ✔
 * [Типы транзакций](concept/docs/Transactions.md) ✔
 * [Резервирование РА](concept/docs/Reservation.md) ✔
 * [Типы ресурсных активов](concept/docs/Infrastructure.md) ✔
