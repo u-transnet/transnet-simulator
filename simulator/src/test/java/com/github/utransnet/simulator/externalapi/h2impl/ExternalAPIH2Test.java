@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Import;
 import javax.annotation.PostConstruct;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -239,6 +241,78 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
         assertEquals(1, externalAPI.operationsAfter(from, baseOperation1).size());
         assertEquals(baseOperation1.getId(), externalAPI.operationsAfter(from, baseOperation1).get(0).getId());
 
+        externalAPI.sendMessage(from, to, msg);
+    }
+
+    @Test
+    public void listenAccountUpdatesByUserId() throws Exception {
+        prepareAccounts();
+        final int[] updatesCount = {0};
+        externalAPI.listenAccountUpdates(
+                "from",
+                Stream.of(from).collect(Collectors.toSet()),
+                accountUpdateObject -> {
+                    updatesCount[0]++;
+                    assertEquals(from, accountUpdateObject.getUpdatedAccount());
+                }
+        );
+        externalAPI.listenAccountUpdates(
+                "to",
+                Stream.of(to).collect(Collectors.toSet()),
+                accountUpdateObject -> {
+                    updatesCount[0]++;
+                    assertEquals(to, accountUpdateObject.getUpdatedAccount());
+                }
+        );
+        externalAPI.sendMessage(from, to, msg);
+        assertEquals(2, updatesCount[0]);
+    }
+
+    @Test
+    public void listenAccountOperationsByUserId() throws Exception {
+        prepareAccounts();
+        final int[] updatesCount = {0};
+        externalAPI.listenAccountOperations(
+                "from",
+                Stream.of(from).collect(Collectors.toSet()),
+                externalObject -> {
+                    updatesCount[0]++;
+                    assertTrue(externalObject instanceof MessageOperation);
+                }
+        );
+        externalAPI.listenAccountOperations(
+                "to",
+                Stream.of(to).collect(Collectors.toSet()),
+                externalObject -> {
+                    updatesCount[0]++;
+                    assertTrue(externalObject instanceof MessageOperation);
+                }
+        );
+        externalAPI.sendMessage(from, to, msg);
+        assertEquals(2, updatesCount[0]);
+    }
+
+    @Test
+    public void removeAccountUpdateListener() throws Exception {
+        prepareAccounts();
+        externalAPI.listenAccountUpdates(
+                "from",
+                Stream.of(from).collect(Collectors.toSet()),
+                accountUpdateObject -> fail("Listener should be deleted")
+        );
+        externalAPI.removeAccountUpdateListener("from");
+        externalAPI.sendMessage(from, to, msg);
+    }
+
+    @Test
+    public void removeAccountOperationListener() throws Exception {
+        prepareAccounts();
+        externalAPI.listenAccountOperations(
+                "from",
+                Stream.of(from).collect(Collectors.toSet()),
+                accountUpdateObject -> fail("Listener should be deleted")
+        );
+        externalAPI.removeAccountOperationListener("from");
         externalAPI.sendMessage(from, to, msg);
     }
 

@@ -6,7 +6,9 @@ import com.github.utransnet.simulator.externalapi.operations.OperationType;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by Artem on 13.02.2018.
@@ -18,6 +20,9 @@ public class ExternalAPIH2 extends ExternalAPI {
     private final APIObjectFactoryH2 apiObjectFactory;
     private final MessageOperationRepository messageOperationRepository;
     private final ProposalH2Repository proposalRepository;
+
+    private final Map<String, AccountUpdateListener<AccountUpdateObject>> accountUpdateListeners = new HashMap<>(32);
+    private final Map<String, AccountUpdateListener<ExternalObject>> accountOperationListeners = new HashMap<>(32);
 
     ExternalAPIH2(
             TransferOperationH2Repository transferOperationRepository,
@@ -45,30 +50,58 @@ public class ExternalAPIH2 extends ExternalAPI {
                 apiObjectFactory, proposingAccount, feePayer, transferOperation
         );
         proposalRepository.save(proposalH2);
+
+        Set<String> accsToNotify = Stream.of(
+                from.getId(),
+                to.getId(),
+                proposingAccount.getId(),
+                feePayer.getId()
+        ).collect(Collectors.toSet());
+        fireAccountOperation(accsToNotify, proposalH2);
+        fireAccountUpdate(accsToNotify);
     }
 
     @Override
     public void approveProposal(UserAccount approvingAccount, Proposal proposal) {
         ProposalH2 proposalH2 = (ProposalH2) proposal;
-        if(proposalH2.neededApproves().contains(approvingAccount.getId())) {
+
+        Set<String> accsToNotify = new HashSet<>(10);
+        accsToNotify.add(approvingAccount.getId());
+        ExternalObject updaterObject = proposalH2;
+
+        if (proposalH2.neededApproves().contains(approvingAccount.getId())) {
             proposalH2.addApprove(approvingAccount);
             proposalRepository.save(proposalH2);
-            if(proposalH2.approved()){
-                BaseOperation operation = proposalH2.getOperation();
-                switch (operation.getOperationType()){
-                    case TRANSFER:
-                        if(operation instanceof TransferOperationH2) {
-                            transferOperationRepository.save((TransferOperationH2)operation);
+            BaseOperation operation = proposalH2.getOperation();
+            switch (operation.getOperationType()) {
+                case TRANSFER:
+                    if (operation instanceof TransferOperationH2) {
+                        TransferOperationH2 operation1 = (TransferOperationH2) operation;
+                        accsToNotify.add(operation1.getFromStr());
+                        accsToNotify.add(operation1.getToStr());
+                        if (proposalH2.approved()) {
+                            transferOperationRepository.save(operation1);
+                            proposalRepository.delete(proposalH2);
+                            updaterObject = operation1;
                         }
-                        break;
-                    case MESSAGE:
-                        if(operation instanceof MessageOperationH2) {
-                            messageOperationRepository.save((MessageOperationH2)operation);
+                    }
+                    break;
+                case MESSAGE:
+                    if (operation instanceof MessageOperationH2) {
+                        MessageOperationH2 operation1 = (MessageOperationH2) operation;
+                        accsToNotify.add(operation1.getFromStr());
+                        accsToNotify.add(operation1.getToStr());
+                        if (proposalH2.approved()) {
+                            messageOperationRepository.save(operation1);
+                            proposalRepository.delete(proposalH2);
+                            updaterObject = operation1;
                         }
-                        break;
-                }
-                proposalRepository.delete(proposalH2);
+                    }
+                    break;
             }
+
+            fireAccountOperation(accsToNotify, updaterObject);
+            fireAccountUpdate(accsToNotify);
         }
     }
 
@@ -79,6 +112,10 @@ public class ExternalAPIH2 extends ExternalAPI {
         );
         transferOperationH2.setCreationDate(Instant.now());
         transferOperationRepository.save(transferOperationH2);
+
+        Set<String> accsToNotify = Stream.of(from.getId(), to.getId()).collect(Collectors.toSet());
+        fireAccountOperation(accsToNotify, transferOperationH2);
+        fireAccountUpdate(accsToNotify);
     }
 
     @Override
@@ -86,6 +123,10 @@ public class ExternalAPIH2 extends ExternalAPI {
         MessageOperationH2 messageOperationH2 = new MessageOperationH2(apiObjectFactory, from, to, message);
         messageOperationH2.setCreationDate(Instant.now());
         messageOperationRepository.save(messageOperationH2);
+
+        Set<String> accsToNotify = Stream.of(from.getId(), to.getId()).collect(Collectors.toSet());
+        fireAccountOperation(accsToNotify, messageOperationH2);
+        fireAccountUpdate(accsToNotify);
     }
 
     @Override
@@ -120,7 +161,7 @@ public class ExternalAPIH2 extends ExternalAPI {
     @Override
     public Optional<? extends BaseOperation> getLastOperation(UserAccount account) {
         List<? extends BaseOperation> operations = getAccountHistory(account);
-        if(operations.isEmpty()){
+        if (operations.isEmpty()) {
             return Optional.empty();
         } else {
             return Optional.of(operations.get(operations.size() - 1));
@@ -139,6 +180,57 @@ public class ExternalAPIH2 extends ExternalAPI {
                         baseOperation -> history.subList(history.indexOf(baseOperation), history.size() - 1)
                 )
                 .orElseGet(() -> new ArrayList<>(0));
+    }
+
+    @Override
+    public void listenAccountUpdatesByUserId(String listenerId, Set<String> accsToListen, Consumer<AccountUpdateObject> onUpdate) {
+        accountUpdateListeners.put(listenerId, new AccountUpdateListener<>(accsToListen, onUpdate));
+    }
+
+    @Override
+    public void removeAccountUpdateListener(String listenerId) {
+        accountUpdateListeners.remove(listenerId);
+    }
+
+    @Override
+    public void listenAccountOperationsByUserId(String listenerId, Set<String> accsToListen, Consumer<ExternalObject> onUpdate) {
+        accountOperationListeners.put(listenerId, new AccountUpdateListener<>(accsToListen, onUpdate));
+    }
+
+    @Override
+    public void removeAccountOperationListener(String listenerId) {
+        accountOperationListeners.remove(listenerId);
+    }
+
+    private void fireAccountOperation(Set<String> accsToNotify, ExternalObject externalObject) {
+        accountOperationListeners.values()
+                .stream()
+                .filter(listener -> {
+                    Set<String> accsToListen = new HashSet<>(listener.accsToListen);
+                    accsToListen.retainAll(accsToNotify);
+                    return accsToListen.size() > 0;
+                })
+                .forEach(listener -> listener.fire(externalObject));
+    }
+
+    private void fireAccountUpdate(Set<String> accsToNotify) {
+        accountUpdateListeners.values()
+                .forEach(listener -> accsToNotify.forEach(account -> {
+                    if(listener.accsToListen.contains(account)) {
+                        UserAccount userAccount = apiObjectFactory.userAccount(account);
+                        listener.fire(new AccountUpdateObject() {
+                            @Override
+                            public int getTotalOperations() {
+                                return getAccountHistory(userAccount).size();
+                            }
+
+                            @Override
+                            public UserAccount getUpdatedAccount() {
+                                return userAccount;
+                            }
+                        });
+                    }
+                }));
     }
 
 }
