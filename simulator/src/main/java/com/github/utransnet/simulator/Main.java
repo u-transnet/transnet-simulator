@@ -2,7 +2,7 @@ package com.github.utransnet.simulator;
 
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
-import com.github.utransnet.simulator.route.Scenario;
+import com.github.utransnet.simulator.route.ScenarioContainer;
 import com.github.utransnet.simulator.services.SimulationStartedException;
 import com.github.utransnet.simulator.services.Supervisor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class Main {
     }
 
     @RequestMapping("/import_config")
-    ResponseEntity importConfig(@RequestBody Scenario scenario) {
+    ResponseEntity importConfig(@RequestBody ScenarioContainer scenario) {
         try {
             supervisor.init(scenario);
             return new ResponseEntity(HttpStatus.OK);

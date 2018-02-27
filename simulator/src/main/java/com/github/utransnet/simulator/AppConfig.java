@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.actors.factory.ActorConfig;
+import com.github.utransnet.simulator.actors.factory.ActorFactory;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
@@ -52,14 +53,18 @@ public class AppConfig {
     @Bean
     @Scope("singleton")
     @Autowired
-    Supervisor supervisor(InputQueue<RouteMap> routeMapInputQueue, InputQueue<Client> clientInputQueue) {
-        return new SupervisorImpl(routeMapInputQueue, clientInputQueue);
+    Supervisor supervisor(
+            InputQueue<RouteMap> routeMapInputQueue,
+            InputQueue<Client> clientInputQueue,
+            ActorFactory actorFactory
+    ) {
+        return new SupervisorImpl(routeMapInputQueue, clientInputQueue, actorFactory, externalAPI);
     }
 
     @Bean
     @Scope("prototype")
     @Autowired
-    RouteMap routeMap(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
+    RouteMap routeMap(ExternalAPI externalAPI) {
         return new RouteMap(externalAPI);
     }
 
