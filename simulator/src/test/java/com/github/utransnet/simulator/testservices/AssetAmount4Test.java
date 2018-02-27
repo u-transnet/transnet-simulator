@@ -1,4 +1,4 @@
-package com.github.utransnet.simulator.externalapi.h2impl;
+package com.github.utransnet.simulator.testservices;
 
 import com.github.utransnet.simulator.externalapi.Asset;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
@@ -7,11 +7,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 /**
- * Created by Artem on 16.02.2018.
+ * Created by Artem on 28.02.2018.
  */
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"asset", "amount"})
-class AssetAmountH2 implements AssetAmount {
+class AssetAmount4Test implements AssetAmount {
     @Getter
     private Asset asset;
     @Getter

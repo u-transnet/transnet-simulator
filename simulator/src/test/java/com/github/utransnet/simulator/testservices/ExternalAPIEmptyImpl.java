@@ -49,19 +49,29 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount createAccount(String name) {
-        return null;
+        return new UserAccount(this) {
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public String getId() {
+                return name;
+            }
+        };
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount getAccountByName(String name) {
-        return null;
+        return createAccount(name);
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount getAccountById(String name) {
-        return null;
+        return createAccount(name);
     }
 
     @Override
