@@ -1,12 +1,14 @@
 package com.github.utransnet.simulator;
 
-import com.github.utransnet.simulator.actors.factory.ActorConfig;
 import com.github.utransnet.simulator.actors.Client;
+import com.github.utransnet.simulator.actors.factory.ActorConfig;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.impl.ExternalAPIConfig;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
+import com.github.utransnet.simulator.route.AssetAmountDeserializer;
+import com.github.utransnet.simulator.route.AssetAmountSerializer;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import com.github.utransnet.simulator.services.Supervisor;
@@ -52,16 +54,34 @@ public class AppConfig {
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     RouteMap routeMap(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
         return new RouteMap(externalAPI, objectFactory);
     }
 
     @Bean
+    @Scope("prototype")
+    AssetAmountSerializer assetAmountSerializer() {
+        return new AssetAmountSerializer();
+    }
+
+    @Bean
+    @Scope("prototype")
+    @Autowired
+    AssetAmountDeserializer assetAmountDeserializer(APIObjectFactory objectFactory) {
+        return new AssetAmountDeserializer(objectFactory);
+    }
+
+    @Bean
     @Scope("singleton")
     @Autowired
-    RouteMapFactory routeMapFactory(ApplicationContext context) {
-        return new RouteMapFactory(context);
+    RouteMapFactory routeMapFactory(
+            ApplicationContext context,
+            AssetAmountDeserializer assetAmountDeserializer,
+            AssetAmountSerializer assetAmountSerializer
+    ) {
+        return new RouteMapFactory(context, assetAmountDeserializer, assetAmountSerializer);
     }
 
 }

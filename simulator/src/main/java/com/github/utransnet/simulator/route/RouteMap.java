@@ -9,8 +9,6 @@ import lombok.Setter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by Artem on 31.01.2018.
@@ -24,6 +22,7 @@ public class RouteMap {
 
     private int step = 0;
 
+    @Getter(AccessLevel.PACKAGE)
     @Setter(AccessLevel.PACKAGE)
     private List<RouteNode> route;
 

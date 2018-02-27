@@ -55,13 +55,13 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount getAccountByName(String name) {
-        return null;
+        return createAccount(name);
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount getAccountById(String name) {
-        return null;
+        return createAccount(name);
     }
 
     @Override
