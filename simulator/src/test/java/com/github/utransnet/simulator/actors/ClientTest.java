@@ -80,7 +80,7 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
                 AssetAmountDeserializer assetAmountDeserializer,
                 AssetAmountSerializer assetAmountSerializer
         ) {
-            return new RouteMapFactory(context, assetAmountDeserializer, assetAmountSerializer);
+            return new RouteMapFactory(context, objectMapper);
         }
 
     }

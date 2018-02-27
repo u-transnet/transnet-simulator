@@ -6,7 +6,6 @@ import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.testservices.APIObjectFactoryTestImpl;
 import com.github.utransnet.simulator.testservices.ExternalAPIEmptyImpl;
 import org.junit.Test;
@@ -74,7 +73,7 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
                 new RouteNode("end", 100, assetAmount, assetAmount)
         );
 
-        RouteMap routeMap = new RouteMap(externalAPI, apiObjectFactory);
+        RouteMap routeMap = new RouteMap(externalAPI);
         routeMap.setRoute(routeMapContainer.route);
         routeMap.setId(routeMapContainer.id);
 
@@ -109,26 +108,13 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
     static class Config {
 
         @Bean
+        @Scope("prototype")
         ExternalAPI externalAPI() {
-            return new ExternalAPIEmptyImpl() {
-                @Override
-                public UserAccount createAccount(String name) {
-                    return new UserAccount(null) {
-                        @Override
-                        public String getName() {
-                            return name;
-                        }
-
-                        @Override
-                        public String getId() {
-                            return name;
-                        }
-                    };
-                }
-            };
+            return new ExternalAPIEmptyImpl();
         }
 
         @Bean
+        @Scope("prototype")
         @Autowired
         APIObjectFactory apiObjectFactory(ExternalAPI externalAPI) {
             return new APIObjectFactoryTestImpl(externalAPI);
@@ -155,14 +141,14 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
                 AssetAmountDeserializer assetAmountDeserializer,
                 AssetAmountSerializer assetAmountSerializer
         ) {
-            return new RouteMapFactory(context, assetAmountDeserializer, assetAmountSerializer);
+            return new RouteMapFactory(context, objectMapper);
         }
 
         @Bean
         @Scope("prototype")
         @Autowired
         RouteMap routeMap(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
-            return new RouteMap(externalAPI, objectFactory);
+            return new RouteMap(externalAPI);
         }
 
     }

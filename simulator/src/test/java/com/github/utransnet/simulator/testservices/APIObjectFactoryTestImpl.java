@@ -15,22 +15,12 @@ public class APIObjectFactoryTestImpl implements APIObjectFactory {
 
     @Override
     public Asset getAsset(String id) {
-        return () -> id;
+        return new Asset4Test(id);
     }
 
     @Override
     public AssetAmount getAssetAmount(Asset asset, long amount) {
-        return new AssetAmount() {
-            @Override
-            public Asset getAsset() {
-                return asset;
-            }
-
-            @Override
-            public long getAmount() {
-                return amount;
-            }
-        };
+        return new AssetAmount4Test(asset, amount);
     }
 
     @Override

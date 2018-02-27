@@ -1,8 +1,11 @@
 package com.github.utransnet.simulator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.actors.factory.ActorConfig;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.impl.ExternalAPIConfig;
 import com.github.utransnet.simulator.queue.InputQueue;
@@ -57,7 +60,7 @@ public class AppConfig {
     @Scope("prototype")
     @Autowired
     RouteMap routeMap(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
-        return new RouteMap(externalAPI, objectFactory);
+        return new RouteMap(externalAPI);
     }
 
     @Bean
@@ -76,12 +79,23 @@ public class AppConfig {
     @Bean
     @Scope("singleton")
     @Autowired
-    RouteMapFactory routeMapFactory(
-            ApplicationContext context,
+    ObjectMapper objectMapper(
             AssetAmountDeserializer assetAmountDeserializer,
             AssetAmountSerializer assetAmountSerializer
     ) {
-        return new RouteMapFactory(context, assetAmountDeserializer, assetAmountSerializer);
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(AssetAmount.class, assetAmountDeserializer);
+        module.addSerializer(AssetAmount.class, assetAmountSerializer);
+        objectMapper.registerModule(module);
+        return objectMapper;
+    }
+
+    @Bean
+    @Scope("singleton")
+    @Autowired
+    RouteMapFactory routeMapFactory(ApplicationContext context, ObjectMapper objectMapper) {
+        return new RouteMapFactory(context, objectMapper);
     }
 
 }

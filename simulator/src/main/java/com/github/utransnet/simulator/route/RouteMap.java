@@ -1,6 +1,9 @@
 package com.github.utransnet.simulator.route;
 
-import com.github.utransnet.simulator.externalapi.*;
+import com.github.utransnet.simulator.externalapi.Asset;
+import com.github.utransnet.simulator.externalapi.AssetAmount;
+import com.github.utransnet.simulator.externalapi.ExternalAPI;
+import com.github.utransnet.simulator.externalapi.UserAccount;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -9,6 +12,7 @@ import lombok.Setter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Created by Artem on 31.01.2018.
@@ -27,12 +31,10 @@ public class RouteMap {
     private List<RouteNode> route;
 
     private final ExternalAPI externalAPI;
-    private final APIObjectFactory apiObjectFactory;
 
 
-    public RouteMap(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
+    public RouteMap(ExternalAPI externalAPI) {
         this.externalAPI = externalAPI;
-        this.apiObjectFactory = apiObjectFactory;
     }
 
     public UserAccount getStart() {
@@ -56,7 +58,23 @@ public class RouteMap {
     }
 
     public Map<Asset, Long> getTotalFee() {
-        return route.stream().map(RouteNode::getFee).sequential().collect(
+        Stream<AssetAmount> assetAmountStream = route.stream().map(RouteNode::getFee);
+        return collectFee(assetAmountStream);
+    }
+
+    public Map<Asset, Long> getTotalRailCarFee() {
+        Stream<AssetAmount> assetAmountStream = route.stream().map(RouteNode::getRailCarFee);
+        return collectFee(assetAmountStream);
+    }
+
+    public Map<Asset, Long> getFeeSum() {
+        Stream<AssetAmount> feeStream = route.stream().map(RouteNode::getRailCarFee);
+        Stream<AssetAmount> railCarFeeStream = route.stream().map(RouteNode::getFee);
+        return collectFee(Stream.concat(feeStream, railCarFeeStream));
+    }
+
+    private HashMap<Asset, Long> collectFee(Stream<AssetAmount> assetAmountStream) {
+        return assetAmountStream.sequential().collect(
                 HashMap::new,
                 (map, fee) -> map.compute(
                         fee.getAsset(),
@@ -71,7 +89,7 @@ public class RouteMap {
     }
 
     public boolean goNext() {
-        if(step < route.size()) {
+        if (step < route.size() - 1) {
             step++;
             return true;
         }
