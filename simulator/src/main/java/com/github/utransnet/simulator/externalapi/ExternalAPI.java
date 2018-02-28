@@ -4,14 +4,12 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
-import lombok.NonNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -39,11 +37,13 @@ public abstract class ExternalAPI {
     public abstract List<? extends BaseOperation> getAccountHistory(UserAccount account, OperationType operationType);
     public abstract List<? extends BaseOperation> getAccountHistory(UserAccount account);
 
+    public abstract List<Proposal> getAccountProposals(UserAccount account);
+
     @SuppressWarnings("unchecked")
     protected <T extends BaseOperation> List<T> filterHistory(UserAccount account, OperationType operationType) {
         return getAccountHistory(account, operationType)
                 .stream()
-                .filter(baseOperation -> baseOperation.getClass().equals(operationType.clazz))
+                .filter(baseOperation -> baseOperation.getOperationType() == operationType)
                 .map(baseOperation -> (T) baseOperation)
                 .collect(toList());
     }
@@ -52,10 +52,6 @@ public abstract class ExternalAPI {
     }
     public List<MessageOperation> getAccountMessages(UserAccount account) {
         return filterHistory(account, OperationType.MESSAGE);
-    }
-
-    public List<Proposal> getAccountProposals(UserAccount account) {
-        return null; //TODO
     }
 
     public abstract UserAccount createAccount(String name);

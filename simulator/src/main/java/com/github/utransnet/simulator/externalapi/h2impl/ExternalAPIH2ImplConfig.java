@@ -20,6 +20,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackageClasses={ExternalAPIH2ImplConfig.class})
 public class ExternalAPIH2ImplConfig {
 
+    /*@Bean
+    public Server h2WebServer() throws SQLException {
+        return Server.createWebServer("-web", "-webAllowOthers", "-webPort", String.valueOf(8070)).start();
+    }*/
+
     @Bean
     @Scope("singleton")
     @Autowired

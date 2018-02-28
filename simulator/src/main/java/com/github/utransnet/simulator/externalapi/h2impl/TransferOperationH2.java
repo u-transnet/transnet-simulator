@@ -1,15 +1,19 @@
 package com.github.utransnet.simulator.externalapi.h2impl;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.utransnet.simulator.externalapi.Asset;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.UserAccount;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Table;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Artem on 13.02.2018.
@@ -105,5 +109,11 @@ public class TransferOperationH2 extends BaseOperationH2 implements TransferOper
     @JsonGetter
     String getAssetStr() {
         return asset;
+    }
+
+    @JsonIgnore
+    @Override
+    public Set<String> getAffectedAccounts() {
+        return new HashSet<>(Arrays.asList(from, to));
     }
 }

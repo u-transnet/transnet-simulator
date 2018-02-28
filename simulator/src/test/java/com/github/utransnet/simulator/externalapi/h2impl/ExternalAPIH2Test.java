@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -156,6 +155,23 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
         externalAPI.sendAsset(approvingAcc, to, assetAmount, msg);
         // history shouldn't be changed
         assertEquals(4, externalAPI.getAccountHistory(from).size());
+    }
+
+    @Test
+    public void getAccountMessages() throws Exception {
+        prepareAccounts();
+        externalAPI.sendMessage(from, to, msg);
+        externalAPI.sendMessage(to, from, msg + msg);
+        assertEquals(2, externalAPI.getAccountHistory(from).size());
+        List<MessageOperation> accountMessages = externalAPI.getAccountMessages(from);
+
+
+        assertEquals(from, accountMessages.get(0).getFrom());
+        assertEquals(to, accountMessages.get(0).getTo());
+        assertEquals(msg, accountMessages.get(0).getMessage());
+        assertEquals(from, accountMessages.get(1).getTo());
+        assertEquals(to, accountMessages.get(1).getFrom());
+        assertEquals(msg + msg, accountMessages.get(1).getMessage());
     }
 
     @Test

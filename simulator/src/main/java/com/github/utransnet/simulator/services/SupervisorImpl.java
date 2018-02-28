@@ -6,7 +6,6 @@ import com.github.utransnet.simulator.actors.Logist;
 import com.github.utransnet.simulator.actors.RailCar;
 import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.factory.ActorFactory;
-import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -26,7 +25,6 @@ public class SupervisorImpl implements Supervisor {
     private final InputQueue<RouteMap> routeMapInputQueue;
     private final InputQueue<Client> clientInputQueue;
     private final ActorFactory actorFactory;
-    private final ExternalAPI externalAPI;
 
     private UserAccount userAccount;
 
@@ -36,11 +34,10 @@ public class SupervisorImpl implements Supervisor {
     public SupervisorImpl(
             InputQueue<RouteMap> routeMapInputQueue,
             InputQueue<Client> clientInputQueue,
-            ActorFactory actorFactory, ExternalAPI externalAPI) {
+            ActorFactory actorFactory) {
         this.routeMapInputQueue = routeMapInputQueue;
         this.clientInputQueue = clientInputQueue;
         this.actorFactory = actorFactory;
-        this.externalAPI = externalAPI;
     }
 
     protected Scenario loadScenario(ScenarioContainer scenarioContainer) {
