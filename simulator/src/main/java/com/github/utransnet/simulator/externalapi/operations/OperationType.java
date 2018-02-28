@@ -8,7 +8,7 @@ public enum OperationType {
     TRANSFER(1, TransferOperation.class),
     MESSAGE(2, MessageOperation.class),
     PROPOSAL_UPDATE(3, ProposalUpdateOperation.class),
-    PROPOSAL_CREATE(4, ProposalUpdateOperation.class),
+    PROPOSAL_CREATE(4, ProposalCreateOperation.class),
     PROPOSAL_DELETE(5, ProposalDeleteOperation.class);
 
     public int id;

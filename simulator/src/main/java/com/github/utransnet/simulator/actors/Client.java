@@ -16,13 +16,18 @@ import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
  * Created by Artem on 31.01.2018.
  */
+@Slf4j
 public class Client extends Actor {
     private final RouteMapFactory routeMapFactory;
 
@@ -41,6 +46,7 @@ public class Client extends Actor {
     private void init() {
         ActorTask buyRoputeMapTask = ActorTask.builder()
                 .name("buy-route-map")
+                .executor(this)
                 .context(new ActorTaskContext(
                         OperationEvent.Type.MESSAGE,
                         this::checkReceivedRouteMap
@@ -50,12 +56,14 @@ public class Client extends Actor {
         buyRoputeMapTask.createNext()
 
                 .name("buy-trip")
+                .executor(this)
                 .context(new ActorTaskContext(60))
                 .onEnd(this::requestTrip)
                 .build()
                 .createNext()
 
                 .name("wait-rail-car")
+                .executor(this)
                 .context(new ActorTaskContext(
                         OperationEvent.Type.PROPOSAL_CREATE,
                         this::waitRailCar
@@ -65,8 +73,10 @@ public class Client extends Actor {
                 .createNext()
 
                 .name("start-trip")
+                .executor(this)
                 .context(new ActorTaskContext(60))
                 .onEnd(this::tellInRailCar)
+                .build()
         ;
         addTask(buyRoputeMapTask);
     }
@@ -79,10 +89,17 @@ public class Client extends Actor {
     }
 
     private boolean checkReceivedRouteMap(ActorTaskContext context, OperationEvent event) {
-        if (event instanceof MessageOperation) {
+        if (event instanceof OperationEvent.MessageEvent) {
             OperationEvent.MessageEvent messageEvent = (OperationEvent.MessageEvent) event;
-            if (messageEvent.getObject().getFrom().equals(getLogist())) {
-                return true;
+            MessageOperation messageOperation = messageEvent.getObject();
+            if (messageOperation.getFrom().equals(getLogist())) {
+                String json = messageOperation.getMessage();
+                try {
+                    routeMapFactory.fromJson(json);
+                    return true;
+                } catch (Exception e) {
+                    log.error("Error in decoding received RouteMap", e);
+                }
             }
         }
         return false;
@@ -109,7 +126,7 @@ public class Client extends Actor {
 
             RouteMap routeMap = getRouteMap();
 
-            if(operation instanceof TransferOperation) {
+            if (operation instanceof TransferOperation) {
                 TransferOperation transferOperation = (TransferOperation) operation;
                 if (transferOperation.getFrom().equals(getUTransnetAccount())
                         && transferOperation.getTo().equals(routeMap.getStart())) {
@@ -122,7 +139,25 @@ public class Client extends Actor {
 
     private void tellReadyForTrip(ActorTaskContext context) {
         RouteMap routeMap = getRouteMap();
-        Proposal proposal = Utils.getLast(getUTransnetAccount().getProposalsFrom(routeMap.getStart()));
+        List<Proposal> proposalsFromStation = getUTransnetAccount().getProposals()
+                .stream()
+                .filter(proposal -> {
+                    BaseOperation operation = proposal.getOperation();
+                    if (operation.getOperationType() == OperationType.TRANSFER) {
+                        TransferOperation transferOperation = (TransferOperation) operation;
+                        if (
+                                transferOperation.getTo().equals(routeMap.getStart())
+                                        &&
+                                        transferOperation.getFrom().equals(getUTransnetAccount())
+                                ) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
+        Proposal proposal = Utils.getLast(proposalsFromStation);
+        Assert.notNull(proposal, "proposal must exist");
         getUTransnetAccount().approveProposal(proposal);
     }
 
@@ -142,8 +177,8 @@ public class Client extends Actor {
 
     protected RouteMap getRouteMap() {
         UserAccount logistAccount = getLogist();
-        TransferOperation transferOperation = Utils.getLast(getUTransnetAccount().getTransfersFrom(logistAccount));
-        return routeMapFactory.fromJson(transferOperation.getMemo());
+        MessageOperation messageOperation = Utils.getLast(getUTransnetAccount().getMessagesFrom(logistAccount));
+        return routeMapFactory.fromJson(messageOperation.getMessage());
     }
 
     protected UserAccount getLogist() {

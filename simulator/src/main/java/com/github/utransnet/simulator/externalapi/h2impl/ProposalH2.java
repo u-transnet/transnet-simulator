@@ -1,6 +1,5 @@
 package com.github.utransnet.simulator.externalapi.h2impl;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
@@ -33,17 +32,16 @@ public class ProposalH2 implements Proposal {
     @Setter
     Instant creationDate;
 
-    @ElementCollection(fetch=FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
-    @CollectionTable(name = "approves_to_add", joinColumns = @JoinColumn(name = "proposal_h2_id"))
-    @Column(name = "user_id")
-    private final List<String> approvesToAdd = new ArrayList<>(4);
+    @CollectionTable(name = "approves_added", joinColumns = @JoinColumn(name = "proposal_h2_id"))
+    private final List<String> approvesAdded = new ArrayList<>(4);
 
     @ElementCollection(fetch=FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
-    @CollectionTable(name = "approves_added", joinColumns = @JoinColumn(name = "proposal_h2_id"))
-    @Column(name = "user_id")
-    private final List<String> approved = new ArrayList<>(4);
+    @CollectionTable(name = "approves_to_add", joinColumns = @JoinColumn(name = "proposal_h2_id"))
+    private final List<String> approvesToAdd = new ArrayList<>(4);
+
 
     private String feePayer;
     private String operationJson;
@@ -66,7 +64,7 @@ public class ProposalH2 implements Proposal {
     @Override
     public boolean approved() {
         List<String> tmp = new ArrayList<>(approvesToAdd);
-        tmp.removeAll(approved);
+        tmp.removeAll(approvesAdded);
         return tmp.isEmpty();
     }
 
@@ -80,7 +78,7 @@ public class ProposalH2 implements Proposal {
     @Override
     public List<String> neededApproves() {
         List<String> tmp = new ArrayList<>(approvesToAdd);
-        tmp.removeAll(approved);
+        tmp.removeAll(approvesAdded);
         return tmp;
     }
 
@@ -92,12 +90,17 @@ public class ProposalH2 implements Proposal {
 
     @Override
     public void addApprove(UserAccount userAccount) {
-        approved.add(userAccount.getId());
+        approvesAdded.add(userAccount.getId());
     }
 
 
     @Override
     public String getId() {
         return String.valueOf(id);
+    }
+
+    void clear() {
+        approvesAdded.clear();
+        approvesToAdd.clear();
     }
 }

@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.actors.factory.Actor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -11,6 +12,7 @@ import java.util.function.Consumer;
 /**
  * Created by Artem on 05.02.2018.
  */
+@Slf4j
 @Builder
 public class ActorTask {
 
@@ -74,6 +76,7 @@ public class ActorTask {
                                 finish();
                             }
                         } catch (Exception e) {
+                            log.error("Error in ActorTask[" + name + "]", e);
                             context.setException(e);
                             cancel();
                         }
@@ -105,7 +108,13 @@ public class ActorTask {
 
     public void finish() {
         if (onEnd != null) {
-            onEnd.accept(context);
+            try {
+                onEnd.accept(context);
+            } catch (Exception e) {
+                log.error("Error in ActorTask[" + name + "]", e);
+                context.setException(e);
+                cancel();
+            }
         }
         destroy();
         if (next != null) {

@@ -27,9 +27,11 @@ public class Actor {
 
     private final Set<DelayedAction> delayedActions = new HashSet<>(16);
     private final AbstractQueue<ActorTask> tasksQueue = new LinkedBlockingQueue<>(100);
+
     @Getter(AccessLevel.PROTECTED)
     @Nullable
     private ActorTask currentTask;
+
     @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.PACKAGE)
     private Set<AssetAmount> balance;
@@ -132,9 +134,9 @@ public class Actor {
 
     protected boolean checkNewOperations() {
         Optional<? extends BaseOperation> lastOperation = uTransnetAccount.getLastOperation();
-        if (lastOperation.isPresent()){
+        if (lastOperation.isPresent()) {
             BaseOperation operation = lastOperation.get();
-            if (!Objects.equals(operation.getId(), lastOperationId)){
+            if (!Objects.equals(operation.getId(), lastOperationId)) {
                 lastOperationId = operation.getId();
                 return true;
             }
@@ -175,7 +177,7 @@ public class Actor {
     }
 
 
-    void setUTransnetAccount(@NonNull UserAccount uTransnetAccount) {
+    protected void setUTransnetAccount(@NonNull UserAccount uTransnetAccount) {
         this.uTransnetAccount = uTransnetAccount;
         uTransnetAccount.getLastOperation().ifPresent(baseOperation -> lastOperationId = baseOperation.getId());
     }

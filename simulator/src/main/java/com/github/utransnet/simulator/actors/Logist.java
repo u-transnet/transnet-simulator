@@ -3,7 +3,6 @@ package com.github.utransnet.simulator.actors;
 import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
-import com.github.utransnet.simulator.actors.task.OperationEvent;
 import com.github.utransnet.simulator.actors.task.OperationListener;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
@@ -14,6 +13,7 @@ import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 
@@ -45,10 +45,11 @@ public class Logist extends Actor {
     private void orderReceived(BaseOperation operation) {
         if (operation instanceof TransferOperation) {
             TransferOperation transferOperation = (TransferOperation) operation;
-            if (transferOperation.getAmount() > routeMapPrice) {
+            if (transferOperation.getAmount() >= routeMapPrice) {
                 addTask(
                         ActorTask.builder()
                                 .name("create-route-map")
+                                .executor(this)
                                 .context(
                                         new ActorTaskContext(routeMapCreationTime)
                                                 .addPayload("client", transferOperation.getFrom())
@@ -69,6 +70,7 @@ public class Logist extends Actor {
 
     private void sendRouteMap(ActorTaskContext context) {
         RouteMap routeMap = context.<RouteMap>getPayload("route-map");
+        Assert.notNull(routeMap, "Logist can't send null map");
         UserAccount client = context.<UserAccount>getPayload("client");
         getUTransnetAccount().sendMessage(client, routeMapFactory.toJson(routeMap));
     }

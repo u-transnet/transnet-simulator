@@ -2,6 +2,7 @@ package com.github.utransnet.simulator.route;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
@@ -133,21 +134,33 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
             return new AssetAmountDeserializer(objectFactory);
         }
 
+        @SuppressWarnings("Duplicates") // it's a test config
         @Bean
         @Scope("singleton")
         @Autowired
-        RouteMapFactory routeMapFactory(
-                ApplicationContext context,
+        ObjectMapper objectMapper(
                 AssetAmountDeserializer assetAmountDeserializer,
                 AssetAmountSerializer assetAmountSerializer
         ) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(AssetAmount.class, assetAmountDeserializer);
+            module.addSerializer(AssetAmount.class, assetAmountSerializer);
+            objectMapper.registerModule(module);
+            return objectMapper;
+        }
+
+        @Bean
+        @Scope("singleton")
+        @Autowired
+        RouteMapFactory routeMapFactory(ApplicationContext context, ObjectMapper objectMapper) {
             return new RouteMapFactory(context, objectMapper);
         }
 
         @Bean
         @Scope("prototype")
         @Autowired
-        RouteMap routeMap(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
+        RouteMap routeMap(ExternalAPI externalAPI) {
             return new RouteMap(externalAPI);
         }
 

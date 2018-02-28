@@ -46,6 +46,11 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
         return new ArrayList<>(0);
     }
 
+    @Override
+    public List<Proposal> getAccountProposals(UserAccount account) {
+        return null;
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public UserAccount createAccount(String name) {

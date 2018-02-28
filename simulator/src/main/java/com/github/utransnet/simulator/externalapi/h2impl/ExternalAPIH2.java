@@ -3,12 +3,14 @@ package com.github.utransnet.simulator.externalapi.h2impl;
 import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
+import lombok.SneakyThrows;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by Artem on 13.02.2018.
@@ -49,6 +51,7 @@ public class ExternalAPIH2 extends ExternalAPI {
         ProposalH2 proposalH2 = new ProposalH2(
                 apiObjectFactory, proposingAccount, feePayer, transferOperation
         );
+        proposalH2.setCreationDate(Instant.now());
         proposalRepository.save(proposalH2);
 
         Set<String> accsToNotify = Stream.of(
@@ -62,6 +65,7 @@ public class ExternalAPIH2 extends ExternalAPI {
     }
 
     @Override
+    @SneakyThrows
     public void approveProposal(UserAccount approvingAccount, Proposal proposal) {
         ProposalH2 proposalH2 = (ProposalH2) proposal;
 
@@ -76,13 +80,20 @@ public class ExternalAPIH2 extends ExternalAPI {
             switch (operation.getOperationType()) {
                 case TRANSFER:
                     if (operation instanceof TransferOperationH2) {
-                        TransferOperationH2 operation1 = (TransferOperationH2) operation;
-                        accsToNotify.add(operation1.getFromStr());
-                        accsToNotify.add(operation1.getToStr());
+                        TransferOperationH2 proposedOperation = (TransferOperationH2) operation;
+                        accsToNotify.add(proposedOperation.getFromStr());
+                        accsToNotify.add(proposedOperation.getToStr());
                         if (proposalH2.approved()) {
-                            transferOperationRepository.save(operation1);
-                            proposalRepository.delete(proposalH2);
-                            updaterObject = operation1;
+                            proposedOperation.setCreationDate(Instant.now());
+                            transferOperationRepository.save(proposedOperation);
+
+                            // don't know why, but if we clear proposalH2 object directly,
+                            // approvesAdded won't be cleared
+                            ProposalH2 tmp = proposalRepository.findOne(Long.parseLong(proposalH2.getId()));
+                            tmp.clear();
+                            proposalRepository.save(tmp);
+                            proposalRepository.delete(tmp);
+                            updaterObject = proposedOperation;
                         }
                     }
                     break;
@@ -133,9 +144,17 @@ public class ExternalAPIH2 extends ExternalAPI {
     public List<? extends BaseOperation> getAccountHistory(UserAccount account, OperationType operationType) {
         switch (operationType) {
             case TRANSFER:
-                return transferOperationRepository.findByToOrFrom(account.getId(), account.getId());
+                return transferOperationRepository.findByToOrFrom(account.getId(), account.getId())
+                        .stream()
+                        .peek(op -> op.setApiObjectFactory(apiObjectFactory))
+                        .sorted(Comparator.comparing(o -> o.creationDate))
+                        .collect(Collectors.toList());
             case MESSAGE:
-                return messageOperationRepository.findByToOrFrom(account.getId(), account.getId());
+                return messageOperationRepository.findByToOrFrom(account.getId(), account.getId())
+                        .stream()
+                        .peek(op -> op.setApiObjectFactory(apiObjectFactory))
+                        .sorted(Comparator.comparing(o -> o.creationDate))
+                        .collect(Collectors.toList());
         }
         return new ArrayList<>(0);
     }
@@ -145,9 +164,36 @@ public class ExternalAPIH2 extends ExternalAPI {
         ArrayList<BaseOperationH2> operations = new ArrayList<>();
         operations.addAll(transferOperationRepository.findByToOrFrom(account.getId(), account.getId()));
         operations.addAll(messageOperationRepository.findByToOrFrom(account.getId(), account.getId()));
+
+        Iterable<ProposalH2> allProposals = proposalRepository.findAll();
+        allProposals.forEach(proposalH2 -> {
+            proposalH2.setApiObjectFactory(apiObjectFactory);
+            BaseOperation operation = proposalH2.getOperation();
+            if (proposalH2.neededApproves().contains(account.getId())
+                    || operation.getAffectedAccounts().contains(account.getId())) {
+                HashSet<String> set = new HashSet<>(proposalH2.neededApproves());
+                set.addAll(operation.getAffectedAccounts());
+                ProposalCreateOperationH2 proposalCreateOperation = new ProposalCreateOperationH2(proposalH2, set);
+                proposalCreateOperation.creationDate = proposalH2.creationDate;
+                operations.add(proposalCreateOperation);
+            }
+        });
+
+
         return operations.stream()
                 .peek(op -> op.setApiObjectFactory(apiObjectFactory))
                 .sorted(Comparator.comparing(o -> o.creationDate))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Proposal> getAccountProposals(UserAccount account) {
+        return StreamSupport.stream(proposalRepository.findAll().spliterator(), false)
+                .peek(op -> op.setApiObjectFactory(apiObjectFactory))
+                .filter(
+                        proposalH2 -> proposalH2.neededApproves().contains(account.getId())
+                                || proposalH2.getOperation().getAffectedAccounts().contains(account.getId())
+                )
                 .collect(Collectors.toList());
     }
 

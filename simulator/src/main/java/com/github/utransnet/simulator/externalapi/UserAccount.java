@@ -33,10 +33,9 @@ public abstract class UserAccount implements ExternalObject {
         return externalAPI.getAccountProposals(this);
     }
 
-    public List<Proposal> getProposalsFrom(UserAccount from) {
-//        externalAPI.getAccountProposals()
-        return null; //TODO
-    }
+    /*public List<Proposal> getProposalsFrom(UserAccount from) {
+        return getProposals().stream().filter(proposal -> ).collect(Collectors.toList());
+    }*/
 
     public List<TransferOperation> getTransfers() {
         return externalAPI.getAccountTransfers(this);
@@ -44,6 +43,13 @@ public abstract class UserAccount implements ExternalObject {
 
     public List<MessageOperation> getMessages() {
         return externalAPI.getAccountMessages(this);
+    }
+
+    public List<MessageOperation> getMessagesFrom(UserAccount from) {
+        return getMessages()
+                .stream()
+                .filter(transferOperation -> transferOperation.getFrom().equals(from))
+                .collect(Collectors.toList());
     }
 
     public List<TransferOperation> getTransfersFrom(UserAccount from) {

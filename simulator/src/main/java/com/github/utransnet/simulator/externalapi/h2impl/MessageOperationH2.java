@@ -1,15 +1,17 @@
 package com.github.utransnet.simulator.externalapi.h2impl;
 
-import com.fasterxml.jackson.annotation.*;
-import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
-import lombok.EqualsAndHashCode;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Transient;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Artem on 13.02.2018.
@@ -70,5 +72,11 @@ public class MessageOperationH2 extends BaseOperationH2 implements MessageOperat
     @Override
     public String getMessage() {
         return message;
+    }
+
+    @JsonIgnore
+    @Override
+    public Set<String> getAffectedAccounts() {
+        return new HashSet<>(Arrays.asList(from, to));
     }
 }
