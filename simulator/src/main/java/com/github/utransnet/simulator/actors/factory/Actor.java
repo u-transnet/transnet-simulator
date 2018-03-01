@@ -149,7 +149,7 @@ public class Actor {
         return false;
     }
 
-    final void addOperationListener(OperationListener operationListener) {
+    protected final void addOperationListener(OperationListener operationListener) {
         operationListeners.add(operationListener);
     }
 
