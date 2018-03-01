@@ -150,8 +150,8 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
 
         @Bean
         @Autowired
-        Station station(ExternalAPI externalAPI) {
-            return new Station(externalAPI, null, null);
+        Station station(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
+            return new Station(externalAPI, null, objectFactory);
         }
 
         @Bean
