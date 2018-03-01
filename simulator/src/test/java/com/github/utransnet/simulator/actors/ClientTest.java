@@ -31,15 +31,16 @@ import static org.junit.Assert.*;
 public class ClientTest extends SpringTest<ClientTest.Config> {
 
 
-    public final String json = "{\"id\":\"test-id\"," +
+    private final String json = "{\"id\":\"test-id\"," +
             "\"route\":[" +
             "{\"name\":\"start\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
             ",{\"name\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
             "]}";
+    private final String logist = "logist";
+
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired
     ExternalAPI externalAPI;
-    private final String logist = "logist";
 
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired

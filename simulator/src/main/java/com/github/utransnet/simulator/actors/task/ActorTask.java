@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.util.Assert;
 
 import java.util.function.Consumer;
 
@@ -152,6 +153,9 @@ public class ActorTask {
         private ActorTaskContext context;
 
         public ActorTask build() {
+            Assert.notNull(name, "ActorTask name not set");
+            Assert.notNull(executor, "ActorTask [" + name + "] executor not set");
+            Assert.notNull(context, "ActorTask [" + name + "] context not set");
             ActorTask actorTask = new ActorTask(previous, next, onStart, onEnd, onCancel, executor, name, context);
             if (previous != null) {
                 previous.setNext(actorTask);

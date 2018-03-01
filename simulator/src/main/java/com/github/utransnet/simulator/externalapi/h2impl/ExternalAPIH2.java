@@ -89,10 +89,10 @@ public class ExternalAPIH2 extends ExternalAPI {
 
                             // don't know why, but if we clear proposalH2 object directly,
                             // approvesAdded won't be cleared
-                            ProposalH2 tmp = proposalRepository.findOne(Long.parseLong(proposalH2.getId()));
+                            /*ProposalH2 tmp = proposalRepository.findOne(Long.parseLong(proposalH2.getId()));
                             tmp.clear();
                             proposalRepository.save(tmp);
-                            proposalRepository.delete(tmp);
+                            proposalRepository.delete(tmp);*/
                             updaterObject = proposedOperation;
                         }
                     }
@@ -175,6 +175,7 @@ public class ExternalAPIH2 extends ExternalAPI {
                 set.addAll(operation.getAffectedAccounts());
                 ProposalCreateOperationH2 proposalCreateOperation = new ProposalCreateOperationH2(proposalH2, set);
                 proposalCreateOperation.creationDate = proposalH2.creationDate;
+                proposalCreateOperation.id = Long.parseLong(proposalH2.getId());
                 operations.add(proposalCreateOperation);
             }
         });

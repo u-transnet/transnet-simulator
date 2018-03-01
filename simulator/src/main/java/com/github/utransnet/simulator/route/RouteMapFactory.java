@@ -3,6 +3,7 @@ package com.github.utransnet.simulator.route;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.Assert;
 
 import java.io.IOException;
 
@@ -24,6 +25,7 @@ public class RouteMapFactory {
         RouteMapContainer routeMapContainer = objectMapper.readValue(json, RouteMapContainer.class);
         routeMap.setRoute(routeMapContainer.route);
         routeMap.setId(routeMapContainer.id);
+        Assert.notNull(routeMap.getStart(), "Route map must have start");
         return routeMap;
     }
 
