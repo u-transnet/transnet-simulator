@@ -33,8 +33,8 @@ public class StationTest extends SpringTest<StationTest.Config> {
     private final String stationId = "station";
     private final String json = "{\"id\":\"test-id\"," +
             "\"route\":[" +
-            "{\"name\":\"" + stationId + "\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
-            ",{\"name\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
+            "{\"id\":\"" + stationId + "\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
+            ",{\"id\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
             "]}";
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired

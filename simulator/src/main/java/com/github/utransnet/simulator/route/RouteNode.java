@@ -9,9 +9,9 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-class RouteNode {
-    String name;
-    long distance;
+public class RouteNode {
+    String id;
+    int distance;
     AssetAmount fee;
     AssetAmount railCarFee;
 }

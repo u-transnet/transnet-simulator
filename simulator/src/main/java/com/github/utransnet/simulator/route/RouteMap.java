@@ -24,9 +24,10 @@ public class RouteMap {
     @Setter(AccessLevel.PACKAGE)
     private String id;
 
+    @Getter
     private int step = 0;
 
-    @Getter(AccessLevel.PACKAGE)
+    @Getter
     @Setter(AccessLevel.PACKAGE)
     private List<RouteNode> route;
 
@@ -38,11 +39,11 @@ public class RouteMap {
     }
 
     public UserAccount getStart() {
-        return externalAPI.getAccountByName(route.get(0).name);
+        return externalAPI.getAccountById(route.get(0).id);
     }
 
     public UserAccount getNextAccount(){
-        return externalAPI.getAccountByName(route.get(step).name);
+        return externalAPI.getAccountById(route.get(step).id);
     }
 
     public AssetAmount getNextFee() {
@@ -53,7 +54,7 @@ public class RouteMap {
         return route.get(step).railCarFee;
     }
 
-    public long getNextDistance() {
+    public int getNextDistance() {
         return route.get(step).distance;
     }
 
@@ -84,8 +85,8 @@ public class RouteMap {
         );
     }
 
-    public long getTotalDistance() {
-        return route.stream().mapToLong(RouteNode::getDistance).sum();
+    public int getTotalDistance() {
+        return route.stream().mapToInt(RouteNode::getDistance).sum();
     }
 
     public boolean goNext() {

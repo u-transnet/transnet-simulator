@@ -144,8 +144,13 @@ public class Station extends BaseInfObject {
     }
 
     private void transferRAToRailCar(ActorTaskContext context) {
+        String clientId = context.getPayload("client-id");
         RouteMap routeMap = getRouteMap(context);
-        getUTransnetAccount().sendAsset(getExternalAPI().getAccountById(context.getPayload("rail-car-id")), railCarFee, routeMap.getId());
+        getUTransnetAccount().sendAsset(
+                getExternalAPI().getAccountById(context.getPayload("rail-car-id")),
+                railCarFee,
+                routeMap.getId() + "/" + clientId
+        );
     }
 
     private RouteMap getRouteMap(ActorTaskContext context) {
