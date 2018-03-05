@@ -156,8 +156,8 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
 
         @Bean
         @Autowired
-        CheckPoint checkPoint(ExternalAPI externalAPI) {
-            return new CheckPoint(externalAPI);
+        CheckPoint checkPoint(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
+            return new CheckPoint(externalAPI, objectFactory);
         }
 
     }

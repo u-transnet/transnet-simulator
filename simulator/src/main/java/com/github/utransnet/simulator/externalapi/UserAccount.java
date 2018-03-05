@@ -3,6 +3,7 @@ package com.github.utransnet.simulator.externalapi;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,7 +70,7 @@ public abstract class UserAccount implements ExternalObject {
     }
 
 
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (o == this) return true;
         if (!(o instanceof UserAccount)) return false;
         final UserAccount other = (UserAccount) o;
