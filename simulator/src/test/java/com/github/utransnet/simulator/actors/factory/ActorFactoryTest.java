@@ -1,31 +1,19 @@
 package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.SpringTest;
-import com.github.utransnet.simulator.SpringTestConfig;
 import com.github.utransnet.simulator.actors.*;
-import com.github.utransnet.simulator.externalapi.*;
-import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
-import com.github.utransnet.simulator.queue.InputQueue;
-import com.github.utransnet.simulator.route.RouteMap;
-import com.github.utransnet.simulator.route.RouteMapFactory;
+import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.testservices.APIObjectFactoryTestImpl;
 import com.github.utransnet.simulator.testservices.ExternalAPIEmptyImpl;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Artem on 09.02.2018.
@@ -162,8 +150,8 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
 
         @Bean
         @Autowired
-        Station station(ExternalAPI externalAPI) {
-            return new Station(externalAPI);
+        Station station(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
+            return new Station(externalAPI, null, objectFactory);
         }
 
         @Bean

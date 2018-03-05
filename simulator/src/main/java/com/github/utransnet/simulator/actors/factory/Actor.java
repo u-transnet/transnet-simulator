@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * Created by Artem on 31.01.2018.
  */
@@ -119,6 +121,9 @@ public class Actor {
     private void fireEvent(OperationEvent operationEvent) {
         eventListeners.stream()
                 .filter(eventListener -> eventListener.getEventType() == operationEvent.getEventType())
+                .collect(toList())
+                // calling toList forces stream computing
+                // and allows to avoid ConcurrentModificationException
                 .forEach(listener -> listener.fire(operationEvent));
     }
 
@@ -144,7 +149,7 @@ public class Actor {
         return false;
     }
 
-    public final void addOperationListener(OperationListener operationListener) {
+    protected final void addOperationListener(OperationListener operationListener) {
         operationListeners.add(operationListener);
     }
 
@@ -156,7 +161,7 @@ public class Actor {
         eventListeners.add(operationListener);
     }
 
-    public final void removeEventListener(String name) {
+    final void removeEventListener(String name) {
         eventListeners.removeIf(listener -> Objects.equals(listener.getName(), name));
     }
 

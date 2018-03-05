@@ -27,7 +27,7 @@ public abstract class BaseOperationH2 implements BaseOperation {
     protected APIObjectFactoryH2 apiObjectFactory;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     protected Long id;
 
     @Getter

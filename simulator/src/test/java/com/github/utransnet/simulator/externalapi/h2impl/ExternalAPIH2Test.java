@@ -77,6 +77,15 @@ public class ExternalAPIH2Test extends SpringTest<ExternalAPIH2Test.Config> {
     }
 
     @Test
+    public void operationIds() throws Exception {
+        prepareAccounts();
+        externalAPI.sendMessage(from, to, msg);
+        externalAPI.sendAsset(from, to, assetAmount, msg);
+        List<? extends BaseOperation> accountHistory = externalAPI.getAccountHistory(from);
+        assertNotEquals(accountHistory.get(1).getId(), accountHistory.get(0).getId());
+    }
+
+    @Test
     public void sendAsset() throws Exception {
         prepareAccounts();
         assertEquals(0, transferOperationRepository.count());
