@@ -8,6 +8,10 @@ import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.util.Assert;
 
@@ -26,14 +30,22 @@ public class RailCar extends BaseInfObject {
     private final String delayedStopNameWaitClientPayment = "client-payment";
     private final String namedelayedStopBeforeCheckPoint = "stop-before-check-point";
 
-    private UserAccount reservation;
+    String lastOperationOnReserve = null;
     private AssetAmount checkPointFee;
 
     private UserAccount nextCheckPoint;
+    @Getter(AccessLevel.PROTECTED)
+    private UserAccount reservation;
 
-    private RouteMap routeMap; //TODO: get RouteMap from blockchain
     private int avgSpeed = 60;
     private int safeDistance = 60;
+    @Setter(AccessLevel.PROTECTED)
+    @Getter(AccessLevel.PROTECTED)
+    private RouteMap routeMap; //TODO: get RouteMap from blockchain
+    @Getter(AccessLevel.PROTECTED)
+    private boolean isMoving = false;
+    @Getter(AccessLevel.PROTECTED)
+    private boolean isDoorsClosed = true;
 
     public RailCar(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory) {
         super(externalAPI);
@@ -43,25 +55,28 @@ public class RailCar extends BaseInfObject {
 
     @PostConstruct
     private void init() {
-        addOperationListener(new OperationListener(
-                "wait-order-from-station",
-                OperationType.MESSAGE,
-                operation -> {
-                    MessageOperation messageOperation = (MessageOperation) operation;
+        addEventListener(new EventListener("wait-order-from-station",
+                OperationEvent.Type.MESSAGE,
+                event -> {
+                    MessageOperation messageOperation = ((OperationEvent.MessageEvent) event).getObject();
                     RouteMap routeMap = routeMapFactory.fromJson(messageOperation.getMessage());
                     makeReservation(routeMap);
                     addTasksOnStation();
-                }
-        ));
-        reservation = getExternalAPI().getAccountByName(getUTransnetAccount().getName() + "-reserve");
+                }));
         checkPointFee = apiObjectFactory.getAssetAmount("RA", 10);
     }
 
-    private void addTasksOnStation() {
+    @Override
+    protected void setUTransnetAccount(UserAccount uTransnetAccount) {
+        super.setUTransnetAccount(uTransnetAccount);
+        reservation = getExternalAPI().getAccountByName(getUTransnetAccount().getName() + "-reserve");
+    }
+
+    protected void addTasksOnStation() {
         ActorTask payForOrder = ActorTask.builder()
                 .name("pay-for-order")
                 .executor(this)
-                .context(new ActorTaskContext(0))
+                .context(new ActorTaskContext(1))
                 .onEnd(this::payForOrder)
                 .build();
         payForOrder.createNext()
@@ -86,6 +101,7 @@ public class RailCar extends BaseInfObject {
 
                 .createNext()
                 .name("start-movement")
+                .executor(this)
                 .onStart(this::start)
                 .context(new ActorTaskContext(1))
                 .onEnd(this::startMovement)
@@ -93,15 +109,15 @@ public class RailCar extends BaseInfObject {
         addTask(payForOrder);
     }
 
-    private void addTasksWithCheckPoint() {
-        ActorTask requestPassFromChackPoint = ActorTask.builder()
+    protected void addTasksWithCheckPoint() {
+        ActorTask requestPassFromCheckPoint = ActorTask.builder()
                 .name("request-pass-from-check-point")
                 .executor(this)
                 .context(new ActorTaskContext(1))
                 .onEnd(this::requestPassFromCheckPoint)
                 .build();
 
-        requestPassFromChackPoint.createNext()
+        requestPassFromCheckPoint.createNext()
                 .name("wait-accept-from-check-point")
                 .executor(this)
                 .context(new ActorTaskContext(
@@ -113,20 +129,59 @@ public class RailCar extends BaseInfObject {
                 .createNext()
                 .name("leave-check-point")
                 .executor(this)
-                .context(new ActorTaskContext(1))
+                .context(new ActorTaskContext(10))
                 .onEnd(this::leaveCheckPoint)
+                .onCancel(context -> {
+                    stop();
+                    ActorTask waitProposalFromCheckPoint = ActorTask.builder()
+                            .name("wait-proposal-from-check-point")
+                            .executor(this)
+                            .context(new ActorTaskContext(
+                                    OperationEvent.Type.PROPOSAL_CREATE,
+                                    this::waitProposalFromCheckPoint
+                            ))
+                            .onEnd(this::leaveCheckPoint)
+                            .build();
+                    waitProposalFromCheckPoint.createNext()
+                            .name("request-payment-from-client")
+                            .executor(this)
+                            .onStart(this::requestPaymentFromClient)
+                            .context(new ActorTaskContext(1))
+                            .onEnd(this::startMovement)
+                            .build();
+                    addTask(waitProposalFromCheckPoint);
+                })
                 .build()
                 .createNext()
                 .name("request-payment-from-client")
                 .executor(this)
+                .onStart(context -> System.out.println(context.getWaitSeconds()))
                 .onStart(this::requestPaymentFromClient)
                 .context(new ActorTaskContext(1))
                 .onEnd(this::startMovement)
                 .build();
-        addTask(requestPassFromChackPoint);
+        addTask(requestPassFromCheckPoint);
     }
 
-    private void makeReservation(RouteMap routeMap) {
+    @Override
+    public void update(int seconds) {
+        super.update(seconds);
+        String lastOperationId = this.lastOperationOnReserve;
+        String[] lastOperationIdWrapper = {lastOperationOnReserve};
+        if (checkNewOperations(reservation, lastOperationIdWrapper)) {
+            lastOperationOnReserve = lastOperationIdWrapper[0];
+            getExternalAPI().operationsAfter(reservation, lastOperationId)
+                    .forEach(this::processEachOperation);
+        }
+    }
+
+    @NotNull
+    private Boolean waitProposalFromCheckPoint(ActorTaskContext context, OperationEvent event) {
+        Proposal proposal = ((OperationEvent.ProposalCreateEvent) event).getObject();
+        return checkIfProposalFromCheckPoint(proposal);
+    }
+
+    protected void makeReservation(RouteMap routeMap) {
         this.routeMap = routeMap;
         routeMap.getRoute().forEach(routeNode -> {
             getUTransnetAccount().sendAsset(
@@ -157,7 +212,7 @@ public class RailCar extends BaseInfObject {
         return Objects.equals(operation.getFrom(), getStationAccount());
     }
 
-    private boolean waitPaymentFromClient(ActorTaskContext context, OperationEvent event) {
+    private boolean waitPaymentFromClient(@Nullable ActorTaskContext context, OperationEvent event) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
         return Objects.equals(operation.getFrom().getId(), getClientId());
     }
@@ -185,43 +240,48 @@ public class RailCar extends BaseInfObject {
 
     private boolean waitAcceptFromCheckPoint(ActorTaskContext context, OperationEvent event) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
-        return operation.getFrom().equals(nextCheckPoint) && operation.getMemo().equals(routeMap.getId());
+        return true;
+//        return operation.getFrom().equals(nextCheckPoint) && operation.getMemo().equals(routeMap.getId()); TODO: add memo to proposal
+    }
+
+    private void checkProposalFromCheckPoint(ActorTaskContext context) {
+        List<Proposal> proposals = getExternalAPI().getAccountProposals(reservation)
+                .stream()
+                .filter(this::checkIfProposalFromCheckPoint)
+                .collect(Collectors.toList());
+        if (proposals.isEmpty()) {
+            stop();
+        }
     }
 
     private void leaveCheckPoint(ActorTaskContext context) {
         List<Proposal> proposals = getExternalAPI().getAccountProposals(reservation)
                 .stream()
-                .filter(proposal -> {
-                    BaseOperation operation = proposal.getOperation();
-                    if (operation.getOperationType() == OperationType.TRANSFER) {
-                        TransferOperation transferOperation = (TransferOperation) operation;
-                        if (transferOperation.getTo().equals(nextCheckPoint)) {
-                            if (transferOperation.getMemo().equals(routeMap.getId())) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }).collect(Collectors.toList());
+                .filter(this::checkIfProposalFromCheckPoint)
+                .collect(Collectors.toList());
 
         if (proposals.size() != 1) {
             throw new RuntimeException(
-                    "[" + getUTransnetAccount().getName() + "]: Can't find proposal from current chek point"
+                    "[" + getUTransnetAccount().getName() + "]: Can't find proposal from current check point"
             );
         }
 
-        getUTransnetAccount().approveProposal(proposals.get(0));
+        reservation.approveProposal(proposals.get(0));
 
-        addTask(ActorTask.builder()
-                .name("wait-payment-from-client")
-                .executor(this)
-                .onStart(this::requestPaymentFromClient)
-                .context(new ActorTaskContext(
-                        OperationEvent.Type.TRANSFER,
-                        this::waitPaymentFromClient
-                ))
-                .onEnd(context1 -> removeDelayedAction(delayedStopNameWaitClientPayment))
-                .build());
+        start(context);
+    }
+
+    private boolean checkIfProposalFromCheckPoint(Proposal proposal) {
+        BaseOperation operation = proposal.getOperation();
+        if (operation.getOperationType() == OperationType.TRANSFER) {
+            TransferOperation transferOperation = (TransferOperation) operation;
+            if (transferOperation.getTo().equals(nextCheckPoint)) {
+//                if (transferOperation.getMemo().equals(routeMap.getId())) { TODO add memo to proposal
+                return true;
+//                }
+            }
+        }
+        return false;
     }
 
     private void goIntoCheckPoint(ActorTaskContext context) {
@@ -249,7 +309,17 @@ public class RailCar extends BaseInfObject {
                 routeMap.getNextRailCarFee().getAsset(),
                 routeMap.getNextRailCarFee().getAmount()
         );
-
+        addEventListener(new EventListener(
+                "wait-payment-from-client",
+                OperationEvent.Type.TRANSFER,
+                event -> {
+                    if (waitPaymentFromClient(null, event)) {
+                        removeDelayedAction(delayedStopNameWaitClientPayment);
+                        removeEventListener("wait-payment-from-client");
+                        start(null);
+                    }
+                }
+        ));
     }
 
     @Nullable
@@ -287,19 +357,19 @@ public class RailCar extends BaseInfObject {
         ));
     }
 
-    private void start(ActorTaskContext context) {
-
+    private void start(@Nullable ActorTaskContext context) {
+        isMoving = true;
     }
 
     private void stop() {
-
+        isMoving = false;
     }
 
-    private void openDoors(ActorTaskContext context) {
-
+    private void openDoors(@Nullable ActorTaskContext context) {
+        isDoorsClosed = false;
     }
 
-    private void closeDoors(ActorTaskContext context) {
-
+    private void closeDoors(@Nullable ActorTaskContext context) {
+        isDoorsClosed = true;
     }
 }

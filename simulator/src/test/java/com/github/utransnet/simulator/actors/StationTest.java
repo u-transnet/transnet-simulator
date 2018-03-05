@@ -94,8 +94,11 @@ public class StationTest extends SpringTest<StationTest.Config> {
         assertEquals(station.getUTransnetAccount(), transferOperation.getTo());
 
         client.approveProposal(proposal);
-        station.update(1);
+        station.update(0);
         assertEquals("pay-to-rail-car", station.getCurrentTask().getName());
+        station.update(1);
+        assertNull(station.getCurrentTask());
+        assertEquals("test-id/client", Utils.getLast(railCar.getTransfers()).getMemo());
 
     }
 

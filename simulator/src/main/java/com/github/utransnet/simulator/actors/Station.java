@@ -52,10 +52,12 @@ public class Station extends BaseInfObject {
     private void waitOrder(BaseOperation operation) {
         if (operation instanceof MessageOperation) {
             MessageOperation messageOperation = (MessageOperation) operation;
-            String message = messageOperation.getMessage();
-            RouteMap routeMap = routeMapFactory.fromJson(message);
-            if (routeMap != null && getUTransnetAccount().equals(routeMap.getStart())) {
-                createTasks(messageOperation.getFrom().getId());
+            if (messageOperation.getTo().equals(getUTransnetAccount())) {
+                String message = messageOperation.getMessage();
+                RouteMap routeMap = routeMapFactory.fromJson(message);
+                if (routeMap != null && getUTransnetAccount().equals(routeMap.getStart())) {
+                    createTasks(messageOperation.getFrom().getId());
+                }
             }
         }
     }

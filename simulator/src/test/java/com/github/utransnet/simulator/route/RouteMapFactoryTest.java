@@ -87,12 +87,12 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
         JsonNode end = route.get(1);
         assertEquals(routeMapContainer.id, jsonNode.get("id").asText());
 
-        assertEquals(routeMapContainer.route.get(0).id, start.get("name").asText());
+        assertEquals(routeMapContainer.route.get(0).id, start.get("id").asText());
         assertEquals(routeMapContainer.route.get(0).distance, start.get("distance").asInt());
         assertEquals(assetAmountString, start.get("fee").asText());
         assertEquals(assetAmountString, start.get("railCarFee").asText());
 
-        assertEquals(routeMapContainer.route.get(1).id, end.get("name").asText());
+        assertEquals(routeMapContainer.route.get(1).id, end.get("id").asText());
         assertEquals(routeMapContainer.route.get(1).distance, end.get("distance").asInt());
         assertEquals(assetAmountString, end.get("fee").asText());
         assertEquals(assetAmountString, end.get("railCarFee").asText());
