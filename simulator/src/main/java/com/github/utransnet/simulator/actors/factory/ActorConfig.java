@@ -2,6 +2,7 @@ package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.actors.Logist;
+import com.github.utransnet.simulator.actors.RailCar;
 import com.github.utransnet.simulator.actors.Station;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
@@ -74,5 +75,11 @@ public class ActorConfig {
     @Autowired
     Station station(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory objectFactory) {
         return new Station(externalAPI, routeMapFactory, objectFactory);
+    }
+
+    @Bean
+    @Autowired
+    RailCar railCar(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory objectFactory) {
+        return new RailCar(externalAPI, routeMapFactory, objectFactory);
     }
 }

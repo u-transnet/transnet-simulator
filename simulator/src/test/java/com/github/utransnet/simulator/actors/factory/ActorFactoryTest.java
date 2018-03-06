@@ -144,8 +144,8 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
 
         @Bean
         @Autowired
-        RailCar railCar(ExternalAPI externalAPI) {
-            return new RailCar(externalAPI);
+        RailCar railCar(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
+            return new RailCar(externalAPI, null, objectFactory);
         }
 
         @Bean

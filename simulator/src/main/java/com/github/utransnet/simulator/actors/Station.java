@@ -52,10 +52,12 @@ public class Station extends BaseInfObject {
     private void waitOrder(BaseOperation operation) {
         if (operation instanceof MessageOperation) {
             MessageOperation messageOperation = (MessageOperation) operation;
-            String message = messageOperation.getMessage();
-            RouteMap routeMap = routeMapFactory.fromJson(message);
-            if (routeMap != null && getUTransnetAccount().equals(routeMap.getStart())) {
-                createTasks(messageOperation.getFrom().getId());
+            if (messageOperation.getTo().equals(getUTransnetAccount())) {
+                String message = messageOperation.getMessage();
+                RouteMap routeMap = routeMapFactory.fromJson(message);
+                if (routeMap != null && getUTransnetAccount().equals(routeMap.getStart())) {
+                    createTasks(messageOperation.getFrom().getId());
+                }
             }
         }
     }
@@ -144,8 +146,13 @@ public class Station extends BaseInfObject {
     }
 
     private void transferRAToRailCar(ActorTaskContext context) {
+        String clientId = context.getPayload("client-id");
         RouteMap routeMap = getRouteMap(context);
-        getUTransnetAccount().sendAsset(getExternalAPI().getAccountById(context.getPayload("rail-car-id")), railCarFee, routeMap.getId());
+        getUTransnetAccount().sendAsset(
+                getExternalAPI().getAccountById(context.getPayload("rail-car-id")),
+                railCarFee,
+                routeMap.getId() + "/" + clientId
+        );
     }
 
     private RouteMap getRouteMap(ActorTaskContext context) {

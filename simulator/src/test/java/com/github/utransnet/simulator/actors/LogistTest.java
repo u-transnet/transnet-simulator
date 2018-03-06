@@ -25,10 +25,10 @@ import static org.junit.Assert.*;
  */
 public class LogistTest extends SpringTest<LogistTest.Config> {
 
-    public final String json = "{\"id\":\"test-id\"," +
+    private final String json = "{\"id\":\"test-id\"," +
             "\"route\":[" +
-            "{\"name\":\"start\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
-            ",{\"name\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
+            "{\"id\":\"start\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
+            ",{\"id\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
             "]}";
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired
@@ -118,7 +118,7 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
 
     public static class Logist4Test extends Logist {
 
-        public Logist4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> routeMapInputQueue) {
+        Logist4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> routeMapInputQueue) {
             super(externalAPI, routeMapFactory, routeMapInputQueue);
         }
 

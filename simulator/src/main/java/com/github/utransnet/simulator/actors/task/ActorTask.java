@@ -108,19 +108,19 @@ public class ActorTask {
     }
 
     public void finish() {
-        if (onEnd != null) {
-            try {
+        try {
+            if (onEnd != null) {
                 onEnd.accept(context);
-            } catch (Exception e) {
-                log.error("Error in ActorTask[" + name + "]", e);
-                context.setException(e);
-                cancel();
             }
-        }
-        destroy();
-        if (next != null) {
-            this.context.payload.forEach(next.getContext()::addPayload);
+            destroy();
+            if (next != null) {
+                this.context.payload.forEach(next.getContext()::addPayload);
+            }
             executor.setCurrentTask(next);
+        } catch (Exception e) {
+            log.error("Error in ActorTask[" + name + "]", e);
+            context.setException(e);
+            cancel();
         }
     }
 
@@ -128,12 +128,13 @@ public class ActorTask {
         if (onCancel != null) {
             onCancel.accept(context);
         }
+        executor.setCurrentTask(null);
         destroy();
     }
 
     private void destroy() {
-        executor.removeOperationListener(name + "-finish");
-        executor.removeOperationListener(name + "-cancel");
+        executor.removeEventListener(name + "-finish");
+        executor.removeEventListener(name + "-cancel");
         executor.removeDelayedAction(name + "-finish");
     }
 

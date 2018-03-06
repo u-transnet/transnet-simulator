@@ -41,21 +41,21 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
     public void fromJson() throws Exception {
         String json = "{\"id\":\"test-id\"," +
                 "\"route\":[" +
-                "{\"name\":\"start\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
-                ",{\"name\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
+                "{\"id\":\"start\",\"distance\":0,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
+                ",{\"id\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
                 "]}";
 
         RouteMap routeMap = routeMapFactory.fromJson(json);
         assertEquals("test-id", routeMap.getId());
 
-        assertEquals("start", routeMap.getRoute().get(0).name);
+        assertEquals("start", routeMap.getRoute().get(0).id);
         assertEquals(0, routeMap.getRoute().get(0).distance);
         assertEquals("test", routeMap.getRoute().get(0).getFee().getAsset().getId());
         assertEquals(10, routeMap.getRoute().get(0).getFee().getAmount());
         assertEquals("test", routeMap.getRoute().get(0).getRailCarFee().getAsset().getId());
         assertEquals(10, routeMap.getRoute().get(0).getRailCarFee().getAmount());
 
-        assertEquals("end", routeMap.getRoute().get(1).name);
+        assertEquals("end", routeMap.getRoute().get(1).id);
         assertEquals(100, routeMap.getRoute().get(1).distance);
         assertEquals("test", routeMap.getRoute().get(1).getFee().getAsset().getId());
         assertEquals(10, routeMap.getRoute().get(1).getFee().getAmount());
@@ -87,12 +87,12 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
         JsonNode end = route.get(1);
         assertEquals(routeMapContainer.id, jsonNode.get("id").asText());
 
-        assertEquals(routeMapContainer.route.get(0).name, start.get("name").asText());
+        assertEquals(routeMapContainer.route.get(0).id, start.get("id").asText());
         assertEquals(routeMapContainer.route.get(0).distance, start.get("distance").asInt());
         assertEquals(assetAmountString, start.get("fee").asText());
         assertEquals(assetAmountString, start.get("railCarFee").asText());
 
-        assertEquals(routeMapContainer.route.get(1).name, end.get("name").asText());
+        assertEquals(routeMapContainer.route.get(1).id, end.get("id").asText());
         assertEquals(routeMapContainer.route.get(1).distance, end.get("distance").asInt());
         assertEquals(assetAmountString, end.get("fee").asText());
         assertEquals(assetAmountString, end.get("railCarFee").asText());

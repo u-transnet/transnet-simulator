@@ -54,13 +54,15 @@ public class Actor {
             externalAPI.operationsAfter(uTransnetAccount, lastOperationId)
                     .forEach(this::processEachOperation);
         }
-        delayedActions.forEach(delayedAction -> delayedAction.update(seconds));
+        // new list allows to avoid ConcurrentModificationException
+        // if action adds nor removes a delayed action
+        new ArrayList<>(delayedActions).forEach(delayedAction -> delayedAction.update(seconds));
         if (currentTask == null && !tasksQueue.isEmpty()) {
             setCurrentTask(tasksQueue.poll());
         }
     }
 
-    private void processEachOperation(BaseOperation operation) {
+    protected void processEachOperation(BaseOperation operation) {
         switch (operation.getOperationType()) {
             case TRANSFER:
                 BaseOperation.<TransferOperation>convert(operation, operation.getOperationType())
@@ -127,9 +129,11 @@ public class Actor {
                 .forEach(listener -> listener.fire(operationEvent));
     }
 
-    public void setCurrentTask(ActorTask currentTask) {
+    public void setCurrentTask(@Nullable ActorTask currentTask) {
         this.currentTask = currentTask;
-        currentTask.start();
+        if (currentTask != null) {
+            currentTask.start();
+        }
     }
 
     public String getId() {
@@ -138,11 +142,18 @@ public class Actor {
 
 
     protected boolean checkNewOperations() {
+        String[] lastOperationIdWrapper = {this.lastOperationId};
+        boolean newOperations = checkNewOperations(uTransnetAccount, lastOperationIdWrapper);
+        lastOperationId = lastOperationIdWrapper[0];
+        return newOperations;
+    }
+
+    protected boolean checkNewOperations(UserAccount uTransnetAccount, String[] lastOperationId) {
         Optional<? extends BaseOperation> lastOperation = uTransnetAccount.getLastOperation();
         if (lastOperation.isPresent()) {
             BaseOperation operation = lastOperation.get();
-            if (!Objects.equals(operation.getId(), lastOperationId)) {
-                lastOperationId = operation.getId();
+            if (!Objects.equals(operation.getId(), lastOperationId[0])) {
+                lastOperationId[0] = operation.getId();
                 return true;
             }
         }
@@ -161,7 +172,7 @@ public class Actor {
         eventListeners.add(operationListener);
     }
 
-    final void removeEventListener(String name) {
+    public final void removeEventListener(String name) {
         eventListeners.removeIf(listener -> Objects.equals(listener.getName(), name));
     }
 
