@@ -17,7 +17,9 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
             UserAccount to,
             UserAccount proposingAccount,
             UserAccount feePayer,
-            Asset asset, long amount) {
+            AssetAmount assetAmount,
+            String memo
+    ) {
 
     }
 

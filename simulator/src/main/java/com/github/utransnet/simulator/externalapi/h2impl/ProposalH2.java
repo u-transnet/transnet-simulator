@@ -44,6 +44,8 @@ public class ProposalH2 implements Proposal {
 
 
     private String feePayer;
+
+    @Column(length = 1024)
     private String operationJson;
 
     public ProposalH2() {

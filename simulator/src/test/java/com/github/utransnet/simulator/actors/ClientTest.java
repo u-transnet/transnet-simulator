@@ -151,8 +151,8 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
                 routeMap.getStart(),
                 client.getUTransnetAccount(),
                 routeMap.getStart(),
-                routeMap.getNextFee().getAsset(),
-                routeMap.getNextFee().getAmount()
+                routeMap.getNextFee(),
+                "route-map-id"
         );
 
 

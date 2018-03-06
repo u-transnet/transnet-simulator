@@ -198,7 +198,7 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         TransferOperation raFromCP = (TransferOperation) requestRAFromCP.getOperation();
         assertEquals(railCar.getUTransnetAccount(), raFromCP.getTo());
         assertEquals(checkpoint, raFromCP.getFrom());
-//        assertEquals(routeMap.getId(), raFromCP.getMemo()); TODO: add memo to proposal
+        assertEquals(routeMap.getId(), raFromCP.getMemo());
 
         checkpoint.approveProposal(requestRAFromCP);
         externalAPI.sendProposal(
@@ -206,8 +206,8 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
                 checkpoint,
                 reserve,
                 checkpoint,
-                assetAmount.getAsset(),
-                assetAmount.getAmount()
+                assetAmount,
+                routeMap.getId()
         );
 
         railCar.update(0);
@@ -283,8 +283,8 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
                 checkpoint,
                 reserve,
                 checkpoint,
-                assetAmount.getAsset(),
-                assetAmount.getAmount()
+                assetAmount,
+                routeMap.getId()
         );
         railCar.update(0);
         assertTrue(railCar.isMoving());
