@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -33,7 +34,7 @@ public class CheckPoint extends BaseInfObject {
     private String lastOperationOnReserve = null;
     private AssetAmount railCarFee;
     @Getter(AccessLevel.PROTECTED)
-    private boolean gateClosed;
+    private boolean gateClosed = true;
 
     public CheckPoint(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
         super(externalAPI);
@@ -73,8 +74,14 @@ public class CheckPoint extends BaseInfObject {
         BaseOperation proposedOperation = proposal.getOperation();
         if (proposedOperation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation operation = (TransferOperation) proposedOperation;
-            if (routeMapIdsToServe().contains(operation.getMemo())) {
-                getUTransnetAccount().sendAsset(reservation, railCarFee, operation.getMemo() + "/" + operation.getFrom());
+            if (operation.getTo().equals(getUTransnetAccount())) {
+                if (routeMapIdsToServe().contains(operation.getMemo())) {
+                    getUTransnetAccount().sendAsset(
+                            reservation,
+                            railCarFee,
+                            operation.getMemo() + "/" + operation.getFrom().getId()
+                    );
+                }
             }
         }
     }
@@ -97,8 +104,8 @@ public class CheckPoint extends BaseInfObject {
                             .build();
                 } else if (routeMapIdsToServe().contains(operation.getMemo())) {
                     //client hasn't paid yet
-                    ActorTask.builder()
-                            .name("allow-entrance")
+                    firstTask = ActorTask.builder()
+                            .name("wait-and-allow-entrance")
                             .executor(this)
                             .context(new ActorTaskContext(
                                     OperationEvent.Type.TRANSFER,
@@ -110,6 +117,7 @@ public class CheckPoint extends BaseInfObject {
                 }
 
                 if (firstTask != null) {
+                    addTask(firstTask);
                     firstTask.createNext()
                             .name("ask-payment-from-rail-car")
                             .executor(this)
@@ -118,6 +126,7 @@ public class CheckPoint extends BaseInfObject {
                             .build()
                             .createNext()
                             .name("close-gate")
+                            .executor(this)
                             .context(new ActorTaskContext(
                                     OperationEvent.Type.TRANSFER,
                                     this::checkIfRailCarApproveProposal
@@ -137,13 +146,25 @@ public class CheckPoint extends BaseInfObject {
     private void askPaymentFromRailCar(ActorTaskContext context) {
         UserAccount railCar = getCurrentRailCar();
         if (railCar != null) {
-            getExternalAPI().sendProposal(
-                    railCar,
-                    getUTransnetAccount(),
-                    railCar,
-                    getUTransnetAccount(),
-                    railCarFee.getAsset(),
-                    railCarFee.getAmount()
+            context.addPayload("rail-car", railCar);
+            String routeMapId = getCurrentRouteMapId();
+            if (routeMapId != null) {
+                getExternalAPI().sendProposal(
+                        railCar,
+                        getUTransnetAccount(),
+                        railCar,
+                        getUTransnetAccount(),
+                        railCarFee,
+                        routeMapId
+                );
+            } else {
+                throw new RuntimeException(
+                        "[" + getUTransnetAccount().getName() + "]: can't find current route map id"
+                );
+            }
+        } else {
+            throw new RuntimeException(
+                    "[" + getUTransnetAccount().getName() + "]: can't find current rail car to ask for payment"
             );
         }
     }
@@ -156,10 +177,10 @@ public class CheckPoint extends BaseInfObject {
 
     private boolean checkIfRailCarApproveProposal(ActorTaskContext context, OperationEvent event) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
-        if (operation.getFrom().equals(getCurrentRailCar())) {
-//            if(paidRouteMapIds().contains(operation.getMemo())){ TODO: UK-23
+        if (operation.getFrom().equals(context.getPayload("rail-car"))) {
+            if (paidRouteMapIds().contains(operation.getMemo())) {
             return true;
-//            }
+            }
         }
         return false;
     }
@@ -214,6 +235,18 @@ public class CheckPoint extends BaseInfObject {
                 .collect(Collectors.toList());
     }
 
+    @Nullable
+    protected String getCurrentRouteMapId() {
+        Optional<TransferOperation> reduce = reservation.getTransfers()
+                .stream()
+                .filter(op -> op.getFrom().equals(reservation))
+                .reduce((first, second) -> second); //get last element
+        if (reduce.isPresent()) {
+            return reduce.get().getMemo();
+        }
+        return null;
+    }
+
     protected void openGate() {
         gateClosed = false;
     }
@@ -225,10 +258,10 @@ public class CheckPoint extends BaseInfObject {
     @Override
     protected void setUTransnetAccount(UserAccount uTransnetAccount) {
         super.setUTransnetAccount(uTransnetAccount);
-        reservation = getExternalAPI().getAccountByName(getUTransnetAccount().getName() + "-reserve");
+        reservation = getExternalAPI().getAccountByName(getUTransnetAccount().getId() + "-reserve");
     }
 
-    @Override
+   /* @Override
     public void update(int seconds) {
         super.update(seconds);
         String lastOperationId = this.lastOperationOnReserve;
@@ -238,5 +271,5 @@ public class CheckPoint extends BaseInfObject {
             getExternalAPI().operationsAfter(reservation, lastOperationId)
                     .forEach(this::processEachOperation);
         }
-    }
+    }*/
 }

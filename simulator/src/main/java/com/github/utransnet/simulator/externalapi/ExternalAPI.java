@@ -19,14 +19,13 @@ import static java.util.stream.Collectors.toSet;
  */
 public abstract class ExternalAPI {
 
-    //TODO: add memo
     public abstract void sendProposal(
             UserAccount from,
             UserAccount to,
             UserAccount proposingAccount,
             UserAccount feePayer,
-            Asset asset,
-            long amount
+            AssetAmount assetAmount,
+            String memo
     );
     public abstract void approveProposal(UserAccount approvingAccount, Proposal proposal);
 

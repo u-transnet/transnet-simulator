@@ -50,8 +50,8 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 car,
                 checkPoint.getReservation(),
                 car,
-                apiObjectFactory.getAsset("RA"),
-                10
+                apiObjectFactory.getAssetAmount("RA", 10),
+                "route-map-id"
         );
 
         assertNotNull(checkPoint.getCurrentRailCar());
@@ -74,8 +74,8 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 car2,
                 checkPoint.getReservation(),
                 car2,
-                apiObjectFactory.getAsset("RA"),
-                10
+                apiObjectFactory.getAssetAmount("RA", 10),
+                "route-map-id"
         );
 
         assertNotNull(checkPoint.getCurrentRailCar());
@@ -90,8 +90,8 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 car,
                 checkPoint.getReservation(),
                 car,
-                apiObjectFactory.getAsset("RA"),
-                10
+                apiObjectFactory.getAssetAmount("RA", 10),
+                "route-map-id"
         );
 
         assertNotNull(checkPoint.getCurrentRailCar());
@@ -134,26 +134,111 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         CheckPoint4Test checkPoint = context.getBean(CheckPoint4Test.class);
         checkPoint.setUTransnetAccount(externalAPI.createAccount("cp"));
 
-        //TODO UK-27
+        UserAccount client = externalAPI.createAccount("client");
+        UserAccount logist = externalAPI.createAccount("logist");
+        logist.sendMessage(checkPoint.getUTransnetAccount(), "route-map-id");
         externalAPI.sendProposal(
-                externalAPI.createAccount("client"),
+                client,
                 checkPoint.getUTransnetAccount(),
-                externalAPI.createAccount("client"),
-                externalAPI.createAccount("logist"),
-                apiObjectFactory.getAsset("UTT"),
-                10
+                client,
+                logist,
+                apiObjectFactory.getAssetAmount("RA", 10),
+                "route-map-id"
         );
         checkPoint.update(0);
 
         List<TransferOperation> transfers = checkPoint.getReservation().getTransfers();
         assertEquals(1, transfers.size());
-        assertEquals("id-1", transfers.get(0).getMemo() + "/client");
+        assertEquals("route-map-id/client", transfers.get(0).getMemo());
         assertEquals(checkPoint.getUTransnetAccount(), transfers.get(0).getFrom());
     }
 
     @Test
-    public void createRailCarFlow() throws Exception {
-        //TODO UK-27
+    public void createRailCarFlowClientAlreadyPayed() throws Exception {
+        CheckPoint4Test checkPoint = context.getBean(CheckPoint4Test.class);
+        checkPoint.setUTransnetAccount(externalAPI.createAccount("cp"));
+
+        UserAccount railCar = externalAPI.createAccount("rail-car");
+        UserAccount client = externalAPI.createAccount("client");
+        UserAccount reservation = externalAPI.createAccount(checkPoint.getUTransnetAccount().getId() + "-reserve");
+        UserAccount logist = externalAPI.createAccount("logist");
+
+        startMainFlow(checkPoint, railCar, client, reservation, logist);
+
+        client.approveProposal(Utils.getLast(client.getProposals()));
+
+        checkPoint.update(1);
+        assertNotNull(checkPoint.getCurrentTask());
+        assertEquals("allow-entrance", checkPoint.getCurrentTask().getName());
+        assertTrue(checkPoint.isGateClosed());
+
+        checkPoint.update(1);
+        assertFalse(checkPoint.isGateClosed());
+        TransferOperation paymentFromCPToRailCar = Utils.getLast(railCar.getTransfersFrom(reservation));
+        assertNotNull(paymentFromCPToRailCar);
+        assertEquals("route-map-id", paymentFromCPToRailCar.getMemo());
+        assertEquals("ask-payment-from-rail-car", checkPoint.getCurrentTask().getName());
+
+        checkPoint.update(1);
+        Proposal paymentRequestFromCP = Utils.getLast(railCar.getProposals());
+        assertNotNull(paymentRequestFromCP);
+        TransferOperation paymentRequestFromCPOperation = (TransferOperation) paymentRequestFromCP.getOperation();
+        assertEquals("route-map-id", paymentRequestFromCPOperation.getMemo());
+        assertEquals("close-gate", checkPoint.getCurrentTask().getName());
+
+        railCar.approveProposal(paymentRequestFromCP);
+        checkPoint.update(1);
+        assertNull(checkPoint.getCurrentTask());
+
+
+    }
+
+    @Test
+    public void createRailCarFlowWaitClientPayment() throws Exception {
+        CheckPoint4Test checkPoint = context.getBean(CheckPoint4Test.class);
+        checkPoint.setUTransnetAccount(externalAPI.createAccount("cp"));
+
+        UserAccount railCar = externalAPI.createAccount("rail-car");
+        UserAccount client = externalAPI.createAccount("client");
+        UserAccount reservation = externalAPI.createAccount(checkPoint.getUTransnetAccount().getId() + "-reserve");
+        UserAccount logist = externalAPI.createAccount("logist");
+
+        startMainFlow(checkPoint, railCar, client, reservation, logist);
+
+        checkPoint.update(0);
+        assertNotNull(checkPoint.getCurrentTask());
+        assertEquals("wait-and-allow-entrance", checkPoint.getCurrentTask().getName());
+
+
+        client.approveProposal(Utils.getLast(client.getProposals()));
+        checkPoint.update(0);
+        assertEquals("ask-payment-from-rail-car", checkPoint.getCurrentTask().getName());
+    }
+
+    private void startMainFlow(CheckPoint4Test checkPoint, UserAccount railCar, UserAccount client, UserAccount reservation, UserAccount logist) {
+        logist.sendMessage(checkPoint.getUTransnetAccount(), "route-map-id");
+
+        // make reservation
+        externalAPI.sendProposal(
+                client,
+                checkPoint.getUTransnetAccount(),
+                client,
+                logist,
+                apiObjectFactory.getAssetAmount("UTT", 10),
+                "route-map-id"
+        );
+
+        // rail car attempt to enter
+        externalAPI.sendProposal(
+                reservation,
+                railCar,
+                checkPoint.getUTransnetAccount(),
+                railCar,
+                apiObjectFactory.getAssetAmount("RA", 10),
+                "route-map-id"
+        );
+
+        railCar.approveProposal(Utils.getLast(railCar.getProposals()));
     }
 
     @Override

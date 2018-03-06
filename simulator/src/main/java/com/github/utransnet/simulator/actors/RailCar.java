@@ -233,15 +233,14 @@ public class RailCar extends BaseInfObject {
                 getUTransnetAccount(),
                 nextCheckPoint,
                 getUTransnetAccount(),
-                feeAmount.getAsset(),
-                feeAmount.getAmount()
+                feeAmount,
+                routeMap.getId()
         );
     }
 
     private boolean waitAcceptFromCheckPoint(ActorTaskContext context, OperationEvent event) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
-        return true;
-//        return operation.getFrom().equals(nextCheckPoint) && operation.getMemo().equals(routeMap.getId()); TODO: add memo to proposal
+        return operation.getFrom().equals(nextCheckPoint) && operation.getMemo().equals(routeMap.getId());
     }
 
     private void checkProposalFromCheckPoint(ActorTaskContext context) {
@@ -276,9 +275,9 @@ public class RailCar extends BaseInfObject {
         if (operation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation transferOperation = (TransferOperation) operation;
             if (transferOperation.getTo().equals(nextCheckPoint)) {
-//                if (transferOperation.getMemo().equals(routeMap.getId())) { TODO add memo to proposal
-                return true;
-//                }
+                if (transferOperation.getMemo().equals(routeMap.getId())) {
+                    return true;
+                }
             }
         }
         return false;
@@ -306,8 +305,8 @@ public class RailCar extends BaseInfObject {
                 getUTransnetAccount(),
                 client,
                 getUTransnetAccount(),
-                routeMap.getNextRailCarFee().getAsset(),
-                routeMap.getNextRailCarFee().getAmount()
+                routeMap.getNextRailCarFee(),
+                routeMap.getId() + "/" + routeMap.getNextAccount().getId()
         );
         addEventListener(new EventListener(
                 "wait-payment-from-client",

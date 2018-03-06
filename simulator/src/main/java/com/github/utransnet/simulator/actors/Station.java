@@ -128,8 +128,8 @@ public class Station extends BaseInfObject {
                 getUTransnetAccount(),
                 client,
                 getUTransnetAccount(),
-                stationFee.getAsset(),
-                stationFee.getAmount()
+                stationFee,
+                getRouteMapString(context)
         );
     }
 

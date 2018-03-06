@@ -44,9 +44,11 @@ public class ExternalAPIH2 extends ExternalAPI {
             UserAccount to,
             UserAccount proposingAccount,
             UserAccount feePayer,
-            Asset asset, long amount) {
+            AssetAmount assetAmount,
+            String memo
+    ) {
         TransferOperationH2 transferOperation = new TransferOperationH2(
-                apiObjectFactory, from, to, asset, amount, ""
+                apiObjectFactory, from, to, assetAmount, memo
         );
         ProposalH2 proposalH2 = new ProposalH2(
                 apiObjectFactory, proposingAccount, feePayer, transferOperation
