@@ -6,6 +6,7 @@ import com.github.utransnet.simulator.actors.factory.RailCarBuilder;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.DelayedAction;
 import com.github.utransnet.simulator.externalapi.*;
+import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -178,11 +179,11 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         isMovingField.set(railCar, true);
         assertTrue(railCar.isMoving());
 
-        Field nextCheckPointField = railCar.getClass().getSuperclass().getDeclaredField("nextCheckPoint");
+        Field nextCheckPointField = railCar.getClass().getSuperclass().getDeclaredField("currentCheckPoint");
         nextCheckPointField.setAccessible(true);
         nextCheckPointField.set(railCar, routeMap.getNextAccount());
 
-        railCar.addTasksWithCheckPoint();
+        railCar.askNextCheckPoint(routeMap.getNextAccount());
 
         railCar.update(0);
         assertNotNull(railCar.getCurrentTask());
@@ -210,6 +211,15 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
                 routeMap.getId()
         );
 
+        railCar.update(0);
+
+        MessageOperation messageOperation = Utils.getLast(client.getMessages());
+        assertNotNull(messageOperation);
+        assertEquals(railCar.getUTransnetAccount(), messageOperation.getFrom());
+        assertEquals("test-id/end", messageOperation.getMessage());
+
+        assertNull(railCar.getCurrentTask());
+        railCar.leaveAndGoToNextCP();
         railCar.update(0);
         assertNotNull(railCar.getCurrentTask());
         assertEquals("leave-check-point", railCar.getCurrentTask().getName());
@@ -258,17 +268,19 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         isMovingField.set(railCar, true);
         assertTrue(railCar.isMoving());
 
-        Field nextCheckPointField = railCar.getClass().getSuperclass().getDeclaredField("nextCheckPoint");
+        Field nextCheckPointField = railCar.getClass().getSuperclass().getDeclaredField("currentCheckPoint");
         nextCheckPointField.setAccessible(true);
         nextCheckPointField.set(railCar, routeMap.getNextAccount());
 
-        railCar.addTasksWithCheckPoint();
+        railCar.askNextCheckPoint(routeMap.getNextAccount());
         railCar.update(0);
         railCar.update(1);
         Proposal requestRAFromCP = Utils.getLast(checkpoint.getProposals());
         checkpoint.approveProposal(requestRAFromCP);
 
         railCar.update(0);
+        assertNull(railCar.getCurrentTask());
+        railCar.leaveAndGoToNextCP();
         assertNotNull(railCar.getCurrentTask());
         assertEquals("leave-check-point", railCar.getCurrentTask().getName());
 
@@ -345,8 +357,8 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         }
 
         @Override
-        public void addTasksWithCheckPoint() {
-            super.addTasksWithCheckPoint();
+        public void askNextCheckPoint(UserAccount nextCheckPoint) {
+            super.askNextCheckPoint(nextCheckPoint);
         }
 
         @Override

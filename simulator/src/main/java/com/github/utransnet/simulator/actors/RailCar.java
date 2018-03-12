@@ -33,7 +33,7 @@ public class RailCar extends BaseInfObject {
     String lastOperationOnReserve = null;
     private AssetAmount checkPointFee;
 
-    private UserAccount nextCheckPoint;
+    private UserAccount currentCheckPoint;
     @Getter(AccessLevel.PROTECTED)
     private UserAccount reservation;
 
@@ -59,9 +59,11 @@ public class RailCar extends BaseInfObject {
                 OperationEvent.Type.MESSAGE,
                 event -> {
                     MessageOperation messageOperation = ((OperationEvent.MessageEvent) event).getObject();
-                    RouteMap routeMap = routeMapFactory.fromJson(messageOperation.getMessage());
-                    makeReservation(routeMap);
-                    addTasksOnStation();
+                    if (messageOperation.getTo().equals(getUTransnetAccount())) {
+                        RouteMap routeMap = routeMapFactory.fromJson(messageOperation.getMessage());
+                        makeReservation(routeMap);
+                        addTasksOnStation();
+                    }
                 }));
         checkPointFee = apiObjectFactory.getAssetAmount("RA", 10);
     }
@@ -109,24 +111,28 @@ public class RailCar extends BaseInfObject {
         addTask(payForOrder);
     }
 
-    protected void addTasksWithCheckPoint() {
+    protected void askNextCheckPoint(UserAccount nextCheckPoint) {
         ActorTask requestPassFromCheckPoint = ActorTask.builder()
                 .name("request-pass-from-check-point")
                 .executor(this)
                 .context(new ActorTaskContext(1))
-                .onEnd(this::requestPassFromCheckPoint)
+                .onEnd(context -> requestPassFromCheckPoint(context, nextCheckPoint))
                 .build();
+        addTask(requestPassFromCheckPoint);
 
         requestPassFromCheckPoint.createNext()
                 .name("wait-accept-from-check-point")
                 .executor(this)
                 .context(new ActorTaskContext(
                         OperationEvent.Type.TRANSFER,
-                        this::waitAcceptFromCheckPoint
+                        (context, event) -> waitAcceptFromCheckPoint(context, event, nextCheckPoint)
                 ))
                 .onEnd(this::goIntoCheckPoint)
-                .build()
-                .createNext()
+                .build();
+    }
+
+    protected void leaveAndGoToNextCP() {
+        ActorTask leaveCheckpoint = ActorTask.builder()
                 .name("leave-check-point")
                 .executor(this)
                 .context(new ActorTaskContext(10))
@@ -151,7 +157,10 @@ public class RailCar extends BaseInfObject {
                             .build();
                     addTask(waitProposalFromCheckPoint);
                 })
-                .build()
+                .build();
+        addTask(leaveCheckpoint);
+
+        leaveCheckpoint
                 .createNext()
                 .name("request-payment-from-client")
                 .executor(this)
@@ -160,7 +169,6 @@ public class RailCar extends BaseInfObject {
                 .context(new ActorTaskContext(1))
                 .onEnd(this::startMovement)
                 .build();
-        addTask(requestPassFromCheckPoint);
     }
 
     @Override
@@ -218,15 +226,17 @@ public class RailCar extends BaseInfObject {
     }
 
     private void startMovement(ActorTaskContext context) {
+        currentCheckPoint = routeMap.getNextAccount();
         if (routeMap.goNext()) {
-            nextCheckPoint = routeMap.getNextAccount();
+            askNextCheckPoint(routeMap.getNextAccount());
+            leaveAndGoToNextCP();
             createEmergencyStop(namedelayedStopBeforeCheckPoint, routeMap.getNextDistance());
-            addTasksWithCheckPoint();
+
         }
     }
 
 
-    private void requestPassFromCheckPoint(ActorTaskContext context) {
+    private void requestPassFromCheckPoint(ActorTaskContext context, UserAccount nextCheckPoint) {
         AssetAmount feeAmount = getFeeAmount(nextCheckPoint.getId());
         getExternalAPI().sendProposal(
                 nextCheckPoint,
@@ -238,7 +248,7 @@ public class RailCar extends BaseInfObject {
         );
     }
 
-    private boolean waitAcceptFromCheckPoint(ActorTaskContext context, OperationEvent event) {
+    private boolean waitAcceptFromCheckPoint(ActorTaskContext context, OperationEvent event, UserAccount nextCheckPoint) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
         return operation.getFrom().equals(nextCheckPoint) && operation.getMemo().equals(routeMap.getId());
     }
@@ -274,7 +284,7 @@ public class RailCar extends BaseInfObject {
         BaseOperation operation = proposal.getOperation();
         if (operation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation transferOperation = (TransferOperation) operation;
-            if (transferOperation.getTo().equals(nextCheckPoint)) {
+            if (transferOperation.getTo().equals(currentCheckPoint)) {
                 if (transferOperation.getMemo().equals(routeMap.getId())) {
                     return true;
                 }
@@ -285,6 +295,18 @@ public class RailCar extends BaseInfObject {
 
     private void goIntoCheckPoint(ActorTaskContext context) {
         removeDelayedAction(namedelayedStopBeforeCheckPoint);
+
+        // ask Client to pay to next check point
+        String clientId = getClientId();
+        Assert.notNull(
+                clientId,
+                "[" + getUTransnetAccount().getName() + "]: Can't request payment if Client is unknown"
+        );
+        UserAccount client = getExternalAPI().getAccountById(clientId);
+        getUTransnetAccount().sendMessage(
+                client,
+                routeMap.getId() + "/" + routeMap.getRoute().get(routeMap.getStep() + 1).getId()
+        );
         start(context);
     }
 

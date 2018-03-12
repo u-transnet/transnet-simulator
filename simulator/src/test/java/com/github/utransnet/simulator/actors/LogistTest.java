@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.Utils;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
+import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
@@ -79,6 +80,13 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
         RouteMap routeMap = routeMapFactory.fromJson(routeMapMessage.getMessage());
         assertNotNull(routeMap);
         assertEquals("start", routeMap.getStart().getId());
+
+        Proposal proposal = Utils.getLast(externalAPI.getAccountById("end").getProposals());
+        assertNotNull(proposal);
+        TransferOperation operation = (TransferOperation) proposal.getOperation();
+        assertEquals("client", operation.getFrom().getId());
+        assertEquals("end", operation.getTo().getId());
+        assertEquals("test-id", operation.getMemo());
 
     }
 

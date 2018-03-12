@@ -13,9 +13,11 @@ import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import com.github.utransnet.simulator.route.RouteNode;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 /**
  * Created by Artem on 31.01.2018.
@@ -65,19 +67,32 @@ public class Logist extends Actor {
     }
 
     private void createRouteMap(ActorTaskContext context) {
-        context.addPayload("route-map", routeMapInputQueue.poll());
+        RouteMap routeMap = routeMapInputQueue.poll();
+        context.addPayload("route-map", routeMap);
+        UserAccount client = context.getPayload("client");
+        List<RouteNode> route = routeMap.getRoute();
+        for (int i = 1; i < route.size(); i++) {
+            getExternalAPI().sendProposal(
+                    client,
+                    getExternalAPI().getAccountById(route.get(i).getId()),
+                    client,
+                    getUTransnetAccount(),
+                    route.get(i).getFee(),
+                    routeMap.getId()
+            );
+        }
     }
 
     private void sendRouteMap(ActorTaskContext context) {
-        RouteMap routeMap = context.<RouteMap>getPayload("route-map");
+        RouteMap routeMap = context.getPayload("route-map");
         Assert.notNull(routeMap, "Logist can't send null map");
-        UserAccount client = context.<UserAccount>getPayload("client");
+        UserAccount client = context.getPayload("client");
         getUTransnetAccount().sendMessage(client, routeMapFactory.toJson(routeMap));
     }
 
     private void cancelRouteMapCreation(ActorTaskContext context) {
-        UserAccount client = context.<UserAccount>getPayload("client");
-        AssetAmount assetAmount = context.<AssetAmount>getPayload("paid-asset");
+        UserAccount client = context.getPayload("client");
+        AssetAmount assetAmount = context.getPayload("paid-asset");
         getUTransnetAccount().sendAsset(client, assetAmount, "");
     }
 }
