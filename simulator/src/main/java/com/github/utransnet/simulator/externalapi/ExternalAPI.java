@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.TransactionPointCut;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static java.util.stream.Collectors.toSet;
  */
 public abstract class ExternalAPI {
 
+    @TransactionPointCut
     public abstract void sendProposal(
             UserAccount from,
             UserAccount to,
@@ -27,13 +29,18 @@ public abstract class ExternalAPI {
             AssetAmount assetAmount,
             String memo
     );
+
+    @TransactionPointCut
     public abstract void approveProposal(UserAccount approvingAccount, Proposal proposal);
 
-
+    @TransactionPointCut
     public abstract void sendAsset(UserAccount from, UserAccount to, AssetAmount assetAmount, String memo);
+
+    @TransactionPointCut
     public abstract void sendMessage(UserAccount from, UserAccount to, String message);
 
     public abstract List<? extends BaseOperation> getAccountHistory(UserAccount account, OperationType operationType);
+
     public abstract List<? extends BaseOperation> getAccountHistory(UserAccount account);
 
     public abstract List<Proposal> getAccountProposals(UserAccount account);
@@ -46,21 +53,28 @@ public abstract class ExternalAPI {
                 .map(baseOperation -> (T) baseOperation)
                 .collect(toList());
     }
+
     public List<TransferOperation> getAccountTransfers(UserAccount account) {
         return filterHistory(account, OperationType.TRANSFER);
     }
+
     public List<MessageOperation> getAccountMessages(UserAccount account) {
         return filterHistory(account, OperationType.MESSAGE);
     }
 
+    @TransactionPointCut
     public abstract UserAccount createAccount(String name);
+
     public abstract UserAccount getAccountByName(String name);
+
     public abstract UserAccount getAccountById(String name);
 
     public abstract Optional<? extends BaseOperation> getLastOperation(UserAccount account);
+
     public abstract List<? extends BaseOperation> operationsAfter(UserAccount account, String operationId);
+
     public List<? extends BaseOperation> operationsAfter(UserAccount account, @Nullable BaseOperation operation) {
-        if (operation != null){
+        if (operation != null) {
             return operationsAfter(account, operation.getId());
         } else {
             return operationsAfter(account, "");
@@ -74,17 +88,19 @@ public abstract class ExternalAPI {
             Set<String> accsToListen,
             Consumer<AccountUpdateObject> onUpdate
     );
+
     public void listenAccountUpdates(
             String listenerId,
             Set<UserAccount> accsToListen,
             Consumer<AccountUpdateObject> onUpdate
-    ){
+    ) {
         listenAccountUpdatesByUserId(
                 listenerId,
                 accsToListen.stream().map(UserAccount::getId).collect(toSet()),
                 onUpdate
         );
     }
+
     public abstract void removeAccountUpdateListener(String listenerId);
 
     public abstract void listenAccountOperationsByUserId(
@@ -92,16 +108,18 @@ public abstract class ExternalAPI {
             Set<String> accsToListen,
             Consumer<ExternalObject> onUpdate
     );
+
     public void listenAccountOperations(
             String listenerId,
             Set<UserAccount> accsToListen,
-            Consumer<ExternalObject> onUpdate){
+            Consumer<ExternalObject> onUpdate) {
         listenAccountOperationsByUserId(
                 listenerId,
                 accsToListen.stream().map(UserAccount::getId).collect(toSet()),
                 onUpdate
         );
     }
+
     public abstract void removeAccountOperationListener(String listenerId);
 
     //endregion

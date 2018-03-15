@@ -1,0 +1,22 @@
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <timestamp key="byDay" datePattern="yyyy-MM-dd'T'HH-mm-ss"/>
+    <property scope="context" name="pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %msg%n"/>
+
+
+    <appender name="transactions" class="ch.qos.logback.core.FileAppender">
+        <file>logs/transactions-${byDay}.log</file>
+
+        <encoder>
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="com.github.utransnet.simulator.logging.TransactionLogger">
+        <level value="ALL"/>
+        <appender-ref ref="transactions"/>
+    </logger>
+
+</configuration>

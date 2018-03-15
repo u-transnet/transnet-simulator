@@ -9,6 +9,7 @@ import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
+import com.github.utransnet.simulator.logging.LoggingConfig;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
 import com.github.utransnet.simulator.route.AssetAmountDeserializer;
@@ -32,7 +33,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Configuration
 @Import({
         ActorConfig.class,
-        ExternalAPIH2ImplConfig.class
+        ExternalAPIH2ImplConfig.class,
+        LoggingConfig.class
 //        ExternalAPIConfig.class
 })
 public class AppConfig {
