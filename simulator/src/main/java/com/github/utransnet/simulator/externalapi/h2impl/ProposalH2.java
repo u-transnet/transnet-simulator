@@ -105,4 +105,14 @@ public class ProposalH2 implements Proposal {
         approvesAdded.clear();
         approvesToAdd.clear();
     }
+
+    @Override
+    public String toString() {
+        return "ProposalH2{" +
+                "approvesAdded=" + approvesAdded +
+                ", approvesToAdd=" + approvesToAdd +
+                ", feePayer='" + feePayer + '\'' +
+                ", operationJson='" + operationJson + '\'' +
+                '}';
+    }
 }

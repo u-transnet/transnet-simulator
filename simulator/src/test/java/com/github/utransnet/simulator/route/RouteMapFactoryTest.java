@@ -45,7 +45,7 @@ public class RouteMapFactoryTest extends SpringTest<RouteMapFactoryTest.Config> 
                 ",{\"id\":\"end\",\"distance\":100,\"fee\":\"10 test\",\"railCarFee\":\"10 test\"}" +
                 "]}";
 
-        RouteMap routeMap = routeMapFactory.fromJson(json);
+        RouteMap routeMap = routeMapFactory.fromJsonForce(json);
         assertEquals("test-id", routeMap.getId());
 
         assertEquals("start", routeMap.getRoute().get(0).id);

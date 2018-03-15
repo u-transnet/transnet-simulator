@@ -11,8 +11,10 @@ import com.github.utransnet.simulator.route.RouteMapFactory;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Artem on 31.01.2018.
  */
+@Slf4j
 public class RailCar extends BaseInfObject {
 
     private final RouteMapFactory routeMapFactory;
@@ -30,7 +33,7 @@ public class RailCar extends BaseInfObject {
     private final String delayedStopNameWaitClientPayment = "client-payment";
     private final String namedelayedStopBeforeCheckPoint = "stop-before-check-point";
 
-    String lastOperationOnReserve = null;
+    private String lastOperationOnReserve = null;
     private AssetAmount checkPointFee;
 
     private UserAccount currentCheckPoint;
@@ -61,8 +64,10 @@ public class RailCar extends BaseInfObject {
                     MessageOperation messageOperation = ((OperationEvent.MessageEvent) event).getObject();
                     if (messageOperation.getTo().equals(getUTransnetAccount())) {
                         RouteMap routeMap = routeMapFactory.fromJson(messageOperation.getMessage());
-                        makeReservation(routeMap);
-                        addTasksOnStation();
+                        if (routeMap != null) {
+                            makeReservation(routeMap);
+                            addTasksOnStation();
+                        }
                     }
                 }));
         checkPointFee = apiObjectFactory.getAssetAmount("RA", 10);
@@ -81,6 +86,18 @@ public class RailCar extends BaseInfObject {
                 .context(new ActorTaskContext(1))
                 .onEnd(this::payForOrder)
                 .build();
+       /* payForOrder.createNext()
+                .name("check-payment-from-client")
+                .executor(this)
+                .context(new ActorTaskContext(1))
+                .onEnd(context -> {
+                    UserAccount client = getClient();
+                    Assert.notNull(
+                            client,
+                            "[" + getUTransnetAccount().getName() +
+                                    "]: Client can't be null when we are waiteng payment");
+                    getUTransnetAccount().getTransfersFrom(client).stream().filter(op -> op.getMemo())
+                })*/
         payForOrder.createNext()
                 .name("wait-payment-from-station")
                 .executor(this)
@@ -231,15 +248,36 @@ public class RailCar extends BaseInfObject {
             askNextCheckPoint(routeMap.getNextAccount());
             leaveAndGoToNextCP();
             createEmergencyStop(namedelayedStopBeforeCheckPoint, routeMap.getNextDistance());
-
+        } else {
+            info("Arrived at destination station");
+            getUTransnetAccount().sendMessage(currentCheckPoint, "FREE");
+            openDoors(context);
         }
     }
 
 
     private void requestPassFromCheckPoint(ActorTaskContext context, UserAccount nextCheckPoint) {
         AssetAmount feeAmount = getFeeAmount(nextCheckPoint.getId());
+        UserAccount client = getClient();
+        Assert.notNull(
+                client,
+                "[" + getUTransnetAccount().getName() +
+                        "]: Client can't be null when we are entering checkpoint"
+        );
+
+        info("ask payment for next checkpoint");
         getExternalAPI().sendProposal(
+                client,
                 nextCheckPoint,
+                client,
+                getUTransnetAccount(),
+                routeMap.getNextFee(),
+                routeMap.getId()
+        );
+
+        info("request pass from next check point");
+        getExternalAPI().sendProposal(
+                getExternalAPI().getAccountByName(nextCheckPoint.getId() + "-reserve"),
                 getUTransnetAccount(),
                 nextCheckPoint,
                 getUTransnetAccount(),
@@ -250,7 +288,14 @@ public class RailCar extends BaseInfObject {
 
     private boolean waitAcceptFromCheckPoint(ActorTaskContext context, OperationEvent event, UserAccount nextCheckPoint) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
-        return operation.getFrom().equals(nextCheckPoint) && operation.getMemo().equals(routeMap.getId());
+        UserAccount nextCPReserve = getExternalAPI().getAccountByName(nextCheckPoint.getId() + "-reserve");
+        if (operation.getFrom().equals(nextCPReserve)
+                && operation.getMemo().equals(routeMap.getId())) {
+            info("Received acceptance from check point '" + nextCheckPoint.getName() + "'");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void checkProposalFromCheckPoint(ActorTaskContext context) {
@@ -285,7 +330,10 @@ public class RailCar extends BaseInfObject {
         if (operation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation transferOperation = (TransferOperation) operation;
             if (transferOperation.getTo().equals(currentCheckPoint)) {
-                if (transferOperation.getMemo().equals(routeMap.getId())) {
+                if (
+                        transferOperation.getMemo().equals(routeMap.getId())
+                                || transferOperation.getMemo().equals("free-" + getId())
+                        ) {
                     return true;
                 }
             }
@@ -294,20 +342,23 @@ public class RailCar extends BaseInfObject {
     }
 
     private void goIntoCheckPoint(ActorTaskContext context) {
-        removeDelayedAction(namedelayedStopBeforeCheckPoint);
+        if (!routeMap.isFinished()) {
+            info("Entering check point");
+            removeDelayedAction(namedelayedStopBeforeCheckPoint);
 
-        // ask Client to pay to next check point
-        String clientId = getClientId();
-        Assert.notNull(
-                clientId,
-                "[" + getUTransnetAccount().getName() + "]: Can't request payment if Client is unknown"
-        );
-        UserAccount client = getExternalAPI().getAccountById(clientId);
-        getUTransnetAccount().sendMessage(
-                client,
-                routeMap.getId() + "/" + routeMap.getRoute().get(routeMap.getStep() + 1).getId()
-        );
-        start(context);
+            // ask Client to pay to next check point
+            String clientId = getClientId();
+            Assert.notNull(
+                    clientId,
+                    "[" + getUTransnetAccount().getName() + "]: Can't request payment if Client is unknown"
+            );
+            UserAccount client = getExternalAPI().getAccountById(clientId);
+            getUTransnetAccount().sendMessage(
+                    client,
+                    routeMap.getId() + "/" + routeMap.getRoute().get(routeMap.getStep() + 1).getId()
+            );
+            start(context);
+        }
     }
 
     private void requestPaymentFromClient(ActorTaskContext context) {
@@ -322,6 +373,8 @@ public class RailCar extends BaseInfObject {
         );
         UserAccount client = getExternalAPI().getAccountById(clientId);
 
+
+        info("ask payment for traveled distance between previous and current check point");
         getExternalAPI().sendProposal(
                 client,
                 getUTransnetAccount(),
@@ -367,6 +420,16 @@ public class RailCar extends BaseInfObject {
         return null;
     }
 
+    @Nullable
+    private UserAccount getClient() {
+        String clientId = getClientId();
+        if (clientId == null) {
+            return null;
+        } else {
+            return getExternalAPI().getAccountById(clientId);
+        }
+    }
+
     private void createEmergencyStop(String id, int distanceToCheckPoint) {
         int distanceToMove = distanceToCheckPoint - safeDistance;
         int timeToMove = distanceToMove / avgSpeed;
@@ -392,5 +455,10 @@ public class RailCar extends BaseInfObject {
 
     private void closeDoors(@Nullable ActorTaskContext context) {
         isDoorsClosed = true;
+    }
+
+    @Override
+    protected Logger logger() {
+        return log;
     }
 }

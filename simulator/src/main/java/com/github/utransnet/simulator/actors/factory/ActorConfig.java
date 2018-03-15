@@ -57,30 +57,35 @@ public class ActorConfig {
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     Logist logist(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> routeMapInputQueue){
         return new Logist(externalAPI, routeMapFactory, routeMapInputQueue);
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     Client client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory){
         return new Client(externalAPI, routeMapFactory);
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     Station station(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory objectFactory) {
         return new Station(externalAPI, routeMapFactory, objectFactory);
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     RailCar railCar(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory objectFactory) {
         return new RailCar(externalAPI, routeMapFactory, objectFactory);
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
     CheckPoint checkPoint(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
         return new CheckPoint(externalAPI, objectFactory);

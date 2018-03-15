@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.externalapi.AssetAmount;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,5 +15,5 @@ import java.util.List;
 public class SerializedUserInfo {
     String id;
     String name;
-    List<AssetAmount> balance;
+    List<AssetAmount> balance = new ArrayList<>(4);
 }

@@ -64,7 +64,9 @@ public class ActorTask {
     }
 
     public void start() {
+        log.trace("Starting task '" + name + "'");
         if (onStart != null) {
+            log.trace("Running onStart in task '" + name + "'");
             onStart.accept(context);
         }
         if (context.getSuccessPredicate() != null && context.getSuccessEventType() != null) {
@@ -109,7 +111,9 @@ public class ActorTask {
 
     public void finish() {
         try {
+            log.trace("Finishing task '" + name + "'");
             if (onEnd != null) {
+                log.trace("Running onEnd in task '" + name + "'");
                 onEnd.accept(context);
             }
             destroy();
@@ -125,7 +129,9 @@ public class ActorTask {
     }
 
     private void cancel() {
+        log.trace("Canceling task '" + name + "'");
         if (onCancel != null) {
+            log.trace("Running onCancel in task '" + name + "'");
             onCancel.accept(context);
         }
         executor.setCurrentTask(null);
@@ -166,5 +172,8 @@ public class ActorTask {
 
     }
 
-
+    @Override
+    public String toString() {
+        return name;
+    }
 }

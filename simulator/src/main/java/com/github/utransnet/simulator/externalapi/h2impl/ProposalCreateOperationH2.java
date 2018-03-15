@@ -21,4 +21,11 @@ class ProposalCreateOperationH2 extends BaseOperationH2 implements ProposalCreat
         this.affectedAccounts = affectedAccounts;
         creationDate = proposal.creationDate;
     }
+
+    @Override
+    public String toString() {
+        return "ProposalCreateOperationH2{" +
+                "affectedAccounts=" + affectedAccounts +
+                '}';
+    }
 }

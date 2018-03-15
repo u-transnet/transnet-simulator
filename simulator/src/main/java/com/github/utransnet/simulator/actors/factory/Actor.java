@@ -7,8 +7,13 @@ import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -18,7 +23,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Created by Artem on 31.01.2018.
  */
-@EqualsAndHashCode(of = "uTransnetAccount")
+@Slf4j
 public class Actor {
 
     @Getter(AccessLevel.PROTECTED)
@@ -126,13 +131,17 @@ public class Actor {
                 .collect(toList())
                 // calling toList forces stream computing
                 // and allows to avoid ConcurrentModificationException
-                .forEach(listener -> listener.fire(operationEvent));
+                .forEach(listener -> {
+                    trace("Firing event '" + operationEvent.getEventType().name() + "' for listener '" + listener.getName() + "'");
+                    listener.fire(operationEvent);
+                });
     }
 
-    public void setCurrentTask(@Nullable ActorTask currentTask) {
-        this.currentTask = currentTask;
-        if (currentTask != null) {
-            currentTask.start();
+    public void setCurrentTask(@Nullable ActorTask newTask) {
+        debug("Switching task '" + currentTask + "' -> '" + newTask + "'");
+        currentTask = newTask;
+        if (newTask != null) {
+            newTask.start();
         }
     }
 
@@ -198,7 +207,28 @@ public class Actor {
         uTransnetAccount.getLastOperation().ifPresent(baseOperation -> lastOperationId = baseOperation.getId());
     }
 
-    protected boolean canEqual(Object other) {
-        return other instanceof Actor;
+
+    protected void info(String msg) {
+        logger().info("[" + uTransnetAccount.getName() + "]: " + msg);
+    }
+
+    protected void debug(String msg) {
+        logger().debug("[" + uTransnetAccount.getName() + "]: " + msg);
+    }
+
+    protected void error(String msg, Exception e) {
+        logger().error("[" + uTransnetAccount.getName() + "]: " + msg, e);
+    }
+
+    protected void warn(String msg) {
+        logger().warn("[" + uTransnetAccount.getName() + "]: " + msg);
+    }
+
+    protected void trace(String msg) {
+        logger().trace("[" + uTransnetAccount.getName() + "]: " + msg);
+    }
+
+    protected Logger logger() {
+        return log;
     }
 }

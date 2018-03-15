@@ -65,7 +65,7 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
     public void orderReceived() throws Exception {
         Logist4Test logist = context.getBean(Logist4Test.class);
         logist.setUTransnetAccount(externalAPI.createAccount("logist"));
-        inputQueue.offer(routeMapFactory.fromJson(json));
+        inputQueue.offer(routeMapFactory.fromJsonForce(json));
 
         UserAccount client = externalAPI.createAccount("client");
         client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount("UTT", 10), "");
@@ -77,7 +77,7 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
         assertNotNull(routeMapMessage);
         assertEquals(logist.getUTransnetAccount(), routeMapMessage.getFrom());
         assertEquals(client, routeMapMessage.getTo());
-        RouteMap routeMap = routeMapFactory.fromJson(routeMapMessage.getMessage());
+        RouteMap routeMap = routeMapFactory.fromJsonForce(routeMapMessage.getMessage());
         assertNotNull(routeMap);
         assertEquals("start", routeMap.getStart().getId());
 
