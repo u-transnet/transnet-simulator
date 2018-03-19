@@ -7,16 +7,30 @@
 
     <appender name="transactions" class="ch.qos.logback.core.FileAppender">
         <file>logs/transactions-${byDay}.log</file>
-
         <encoder>
             <pattern>${pattern}</pattern>
         </encoder>
     </appender>
-
-
     <logger name="com.github.utransnet.simulator.logging.TransactionLogger">
         <level value="ALL"/>
         <appender-ref ref="transactions"/>
     </logger>
+
+    <appender name="actions" class="ch.qos.logback.core.FileAppender">
+        <file>logs/actions-${byDay}.log</file>
+        <encoder>
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+    <logger name="com.github.utransnet.simulator.logging.ActionLogger">
+        <level value="ALL"/>
+        <appender-ref ref="actions"/>
+    </logger>
+
+    <logger name="logging.level.com.github.utransnet">
+        <level value="DEBUG"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
 
 </configuration>

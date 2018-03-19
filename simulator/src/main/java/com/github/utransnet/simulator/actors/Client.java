@@ -14,6 +14,8 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
+import com.github.utransnet.simulator.logging.LoggedAction;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import lombok.Setter;
@@ -37,15 +39,18 @@ import java.util.stream.Collectors;
 public class Client extends Actor {
     private final RouteMapFactory routeMapFactory;
 
+    private final ActionLogger actionLogger;
+
     @Setter
     private String logistName;
 
     @Setter
     private AssetAmount routeMapPrice;
 
-    public Client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory) {
+    public Client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, ActionLogger actionLogger) {
         super(externalAPI);
         this.routeMapFactory = routeMapFactory;
+        this.actionLogger = actionLogger;
     }
 
     @PostConstruct
@@ -125,7 +130,9 @@ public class Client extends Actor {
 
 
     //region start trip
+    @LoggedAction
     private void requestTrip(ActorTaskContext context) {
+        actionLogger.logActorAction(this, "requestTrip", "Client '%s' requesting trip");
         RouteMap routeMap = getRouteMap();
         getUTransnetAccount().sendMessage(routeMap.getStart(), routeMapFactory.toJson(routeMap));
         info("Requesting trip from '" + routeMap.getStart().getId() + "'");
@@ -184,7 +191,9 @@ public class Client extends Actor {
         getUTransnetAccount().approveProposal(proposal);
     }
 
+    @LoggedAction
     private void tellInRailCar(ActorTaskContext context) {
+        actionLogger.logActorAction(this, "clientInRailCar", "Client '%s' entering into rail car");
         RouteMap routeMap = getRouteMap();
         UserAccount railCarAccount = getRailCar();
         if (railCarAccount == null) {
@@ -282,7 +291,9 @@ public class Client extends Actor {
         return false;
     }
 
+    @LoggedAction
     private void exitRailCar(ActorTaskContext context) {
+        actionLogger.logActorAction(this, "exitRailCar", "Client '%s' leaving rail car");
         RouteMap routeMap = getRouteMap();
         info("Leave RailCar on destination station '" + Utils.getLast(routeMap.getRoute()).getId() + "'");
         removeEventListener("pay-to-rail-car-for-traveled-distance");

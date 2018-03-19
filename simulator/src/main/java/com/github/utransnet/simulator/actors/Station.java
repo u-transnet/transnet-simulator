@@ -13,6 +13,8 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
+import com.github.utransnet.simulator.logging.LoggedAction;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import lombok.Setter;
@@ -33,6 +35,7 @@ public class Station extends BaseInfObject {
 
     private final RouteMapFactory routeMapFactory;
     private final APIObjectFactory apiObjectFactory;
+    private final ActionLogger actionLogger;
 
     private AssetAmount stationFee;
     private AssetAmount railCarFee;
@@ -40,10 +43,15 @@ public class Station extends BaseInfObject {
     @Setter
     private CheckPoint checkPoint;
 
-    public Station(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory) {
+    public Station(
+            ExternalAPI externalAPI,
+            RouteMapFactory routeMapFactory,
+            APIObjectFactory apiObjectFactory,
+            ActionLogger actionLogger) {
         super(externalAPI);
         this.routeMapFactory = routeMapFactory;
         this.apiObjectFactory = apiObjectFactory;
+        this.actionLogger = actionLogger;
     }
 
     @PostConstruct
@@ -68,13 +76,20 @@ public class Station extends BaseInfObject {
                 RouteMap routeMap = routeMapFactory.fromJson(message);
                 if (routeMap != null && getUTransnetAccount().equals(routeMap.getStart())) {
                     info("Received trip request from '" + messageOperation.getFrom().getName() + "'");
-                    createTasks(messageOperation.getFrom().getId());
+                    delegateTripToRailCar(messageOperation.getFrom().getId());
                 }
             }
         }
     }
 
-    private void createTasks(String clientId) {
+    @LoggedAction
+    private void delegateTripToRailCar(String clientId) {
+        actionLogger.logActorAction(
+                this,
+                "delegateTripToRailCar",
+                "Station '%s' received trip request"
+        );
+
         ActorTaskContext context = new ActorTaskContext(1);
         context.addPayload("client-id", clientId);
         ActorTask task = ActorTask.builder()
@@ -169,6 +184,7 @@ public class Station extends BaseInfObject {
         return false;
     }
 
+    @LoggedAction
     private void transferRAToRailCar(ActorTaskContext context) {
         String clientId = context.getPayload("client-id");
         RouteMap routeMap = getRouteMap(context);
@@ -176,6 +192,11 @@ public class Station extends BaseInfObject {
                 getExternalAPI().getAccountById(context.getPayload("rail-car-id")),
                 railCarFee,
                 routeMap.getId() + "/" + clientId
+        );
+        actionLogger.logActorAction(
+                this,
+                "transferRAToRailCar",
+                "Station '%s' allocated Rail Car to Client"
         );
     }
 

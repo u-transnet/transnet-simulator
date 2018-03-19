@@ -10,6 +10,8 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
+import com.github.utransnet.simulator.logging.LoggedAction;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,6 +33,7 @@ public class CheckPoint extends BaseInfObject {
 
 
     private final APIObjectFactory apiObjectFactory;
+    private final ActionLogger actionLogger;
     @Getter(AccessLevel.PROTECTED)
     private UserAccount reservation;
     private String lastOperationOnReserve = null;
@@ -41,9 +44,10 @@ public class CheckPoint extends BaseInfObject {
     @Setter
     private UserAccount logist;
 
-    public CheckPoint(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
+    public CheckPoint(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory, ActionLogger actionLogger) {
         super(externalAPI);
         this.apiObjectFactory = apiObjectFactory;
+        this.actionLogger = actionLogger;
     }
 
     @PostConstruct
@@ -261,11 +265,15 @@ public class CheckPoint extends BaseInfObject {
         return null;
     }
 
-    protected void openGate() {
+    @LoggedAction
+    private void openGate() {
+        actionLogger.logActorAction(this, "allowEntrance", "CheckPoint '%s' opened gate");
         gateClosed = false;
     }
 
-    protected void closeGate() {
+    @LoggedAction
+    private void closeGate() {
+        actionLogger.logActorAction(this, "allowEntrance", "CheckPoint '%s' closed gate");
         gateClosed = true;
     }
 

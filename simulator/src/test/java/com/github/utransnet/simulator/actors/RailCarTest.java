@@ -9,6 +9,7 @@ import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import org.junit.Assert;
@@ -317,9 +318,10 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         RailCar4Test railCar4Test(
                 ExternalAPI externalAPI,
                 RouteMapFactory routeMapFactory,
-                APIObjectFactory objectFactory
+                APIObjectFactory objectFactory,
+                ActionLogger actionLogger
         ) {
-            return new RailCar4Test(externalAPI, routeMapFactory, objectFactory);
+            return new RailCar4Test(externalAPI, routeMapFactory, objectFactory, actionLogger);
         }
 
 
@@ -327,8 +329,13 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
 
     public static class RailCar4Test extends RailCar {
 
-        RailCar4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory objectFactory) {
-            super(externalAPI, routeMapFactory, objectFactory);
+        RailCar4Test(
+                ExternalAPI externalAPI,
+                RouteMapFactory routeMapFactory,
+                APIObjectFactory objectFactory,
+                ActionLogger actionLogger
+        ) {
+            super(externalAPI, routeMapFactory, objectFactory, actionLogger);
         }
 
         @Override

@@ -9,9 +9,11 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import({
-        TransactionLogger.class
+        TransactionLogger.class,
+        ActionLogger.class
 })
 @EnableAspectJAutoProxy(proxyTargetClass = true)
-//@EnableSpringConfigured
+//@EnableLoadTimeWeaving
 public class LoggingConfig {
+
 }

@@ -9,6 +9,7 @@ import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.route.AssetAmountDeserializer;
 import com.github.utransnet.simulator.route.AssetAmountSerializer;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -74,5 +75,11 @@ public class ActorsConfigForTest {
     @Autowired
     RouteMap routeMap(ExternalAPI externalAPI) {
         return new RouteMap(externalAPI);
+    }
+
+    @Bean
+    @Scope("singleton")
+    ActionLogger actionLogger() {
+        return new ActionLogger();
     }
 }

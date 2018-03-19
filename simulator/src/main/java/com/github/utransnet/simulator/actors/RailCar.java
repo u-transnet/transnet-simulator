@@ -6,6 +6,8 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
+import com.github.utransnet.simulator.logging.LoggedAction;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import lombok.AccessLevel;
@@ -30,6 +32,7 @@ public class RailCar extends BaseInfObject {
 
     private final RouteMapFactory routeMapFactory;
     private final APIObjectFactory apiObjectFactory;
+    private final ActionLogger actionLogger;
     private final String delayedStopNameWaitClientPayment = "client-payment";
     private final String namedelayedStopBeforeCheckPoint = "stop-before-check-point";
 
@@ -50,10 +53,11 @@ public class RailCar extends BaseInfObject {
     @Getter(AccessLevel.PROTECTED)
     private boolean isDoorsClosed = true;
 
-    public RailCar(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory) {
+    public RailCar(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory, ActionLogger actionLogger) {
         super(externalAPI);
         this.routeMapFactory = routeMapFactory;
         this.apiObjectFactory = apiObjectFactory;
+        this.actionLogger = actionLogger;
     }
 
     @PostConstruct
@@ -86,6 +90,7 @@ public class RailCar extends BaseInfObject {
                 .context(new ActorTaskContext(1))
                 .onEnd(this::payForOrder)
                 .build();
+        // TODO: check if cleint payed before
        /* payForOrder.createNext()
                 .name("check-payment-from-client")
                 .executor(this)
@@ -441,20 +446,36 @@ public class RailCar extends BaseInfObject {
         ));
     }
 
+    @LoggedAction
     private void start(@Nullable ActorTaskContext context) {
-        isMoving = true;
+        if (!isMoving) {
+            actionLogger.logActorAction(this, "start", "RailCar '%s' started movement");
+            isMoving = true;
+        }
     }
 
+    @LoggedAction
     private void stop() {
-        isMoving = false;
+        if (isMoving) {
+            actionLogger.logActorAction(this, "stop", "RailCar '%s' stopped movement");
+            isMoving = false;
+        }
     }
 
+    @LoggedAction
     private void openDoors(@Nullable ActorTaskContext context) {
-        isDoorsClosed = false;
+        if (isDoorsClosed) {
+            actionLogger.logActorAction(this, "openDoors", "RailCar '%s' opened doors");
+            isDoorsClosed = false;
+        }
     }
 
+    @LoggedAction
     private void closeDoors(@Nullable ActorTaskContext context) {
-        isDoorsClosed = true;
+        if (!isDoorsClosed) {
+            actionLogger.logActorAction(this, "closeDoors", "RailCar '%s' closed doors");
+            isDoorsClosed = true;
+        }
     }
 
     @Override
