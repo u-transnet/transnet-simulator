@@ -4,6 +4,7 @@ import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.actors.*;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.testservices.APIObjectFactoryTestImpl;
 import com.github.utransnet.simulator.testservices.ExternalAPIEmptyImpl;
 import org.junit.Test;
@@ -85,6 +86,12 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
             return new ExternalAPIEmptyImpl();
         }
 
+        @Bean
+        @Scope("singleton")
+        ActionLogger actionLogger() {
+            return new ActionLogger();
+        }
+
 
         @Bean
         @Scope("singleton")
@@ -132,26 +139,26 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
 
         @Bean
         @Autowired
-        Logist logist(ExternalAPI externalAPI){
-            return new Logist(externalAPI, null, null);
+        Logist logist(ExternalAPI externalAPI, ActionLogger actionLogger) {
+            return new Logist(externalAPI, null, null, actionLogger);
         }
 
         @Bean
         @Autowired
-        Client client(ExternalAPI externalAPI) {
-            return new Client(externalAPI, null);
+        Client client(ExternalAPI externalAPI, ActionLogger actionLogger) {
+            return new Client(externalAPI, null, actionLogger);
         }
 
         @Bean
         @Autowired
-        RailCar railCar(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
-            return new RailCar(externalAPI, null, objectFactory);
+        RailCar railCar(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger) {
+            return new RailCar(externalAPI, null, objectFactory, actionLogger);
         }
 
         @Bean
         @Autowired
-        Station station(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
-            return new Station(externalAPI, null, objectFactory);
+        Station station(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger) {
+            return new Station(externalAPI, null, objectFactory, actionLogger);
         }
 
         @Bean

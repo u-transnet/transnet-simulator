@@ -11,6 +11,7 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import org.junit.Test;
@@ -147,16 +148,26 @@ public class StationTest extends SpringTest<StationTest.Config> {
         @Bean
         @Scope("prototype")
         @Autowired
-        Station4Test station4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory) {
-            return new Station4Test(externalAPI, routeMapFactory, apiObjectFactory);
+        Station4Test station4Test(
+                ExternalAPI externalAPI,
+                RouteMapFactory routeMapFactory,
+                APIObjectFactory apiObjectFactory,
+                ActionLogger actionLogger
+        ) {
+            return new Station4Test(externalAPI, routeMapFactory, apiObjectFactory, actionLogger);
         }
 
     }
 
     public static class Station4Test extends Station {
 
-        Station4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory) {
-            super(externalAPI, routeMapFactory, apiObjectFactory);
+        Station4Test(
+                ExternalAPI externalAPI,
+                RouteMapFactory routeMapFactory,
+                APIObjectFactory apiObjectFactory,
+                ActionLogger actionLogger
+        ) {
+            super(externalAPI, routeMapFactory, apiObjectFactory, actionLogger);
         }
 
         @Override

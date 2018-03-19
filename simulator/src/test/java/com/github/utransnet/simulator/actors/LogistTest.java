@@ -8,6 +8,7 @@ import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
@@ -119,15 +120,25 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
         @Bean
         @Scope("prototype")
         @Autowired
-        Logist4Test logist(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> inputQueue) {
-            return new Logist4Test(externalAPI, routeMapFactory, inputQueue);
+        Logist4Test logist(
+                ExternalAPI externalAPI,
+                RouteMapFactory routeMapFactory,
+                InputQueue<RouteMap> inputQueue,
+                ActionLogger actionLogger
+        ) {
+            return new Logist4Test(externalAPI, routeMapFactory, inputQueue, actionLogger);
         }
     }
 
     public static class Logist4Test extends Logist {
 
-        Logist4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> routeMapInputQueue) {
-            super(externalAPI, routeMapFactory, routeMapInputQueue);
+        Logist4Test(
+                ExternalAPI externalAPI,
+                RouteMapFactory routeMapFactory,
+                InputQueue<RouteMap> routeMapInputQueue,
+                ActionLogger actionLogger
+        ) {
+            super(externalAPI, routeMapFactory, routeMapInputQueue, actionLogger);
         }
 
         @Override

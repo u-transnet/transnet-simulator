@@ -10,6 +10,7 @@ import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,9 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired
     ClientBuilder clientBuilder;
+    @SuppressWarnings("SpringJavaAutowiredMembersInspection")
+    @Autowired
+    ActionLogger actionLogger;
 
     @Test
     public void getRouteMap() throws Exception {
@@ -62,7 +66,7 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
 
     @Test
     public void setGetLogist() throws Exception {
-        Client client = new Client(externalAPI, routeMapFactory);
+        Client client = new Client(externalAPI, routeMapFactory, actionLogger);
         client.setLogistName(logist);
         assertEquals("logist", client.getLogist().getName());
     }
@@ -195,16 +199,16 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
         @Bean
         @Scope("prototype")
         @Autowired
-        Client4Test client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory) {
-            return new Client4Test(externalAPI, routeMapFactory);
+        Client4Test client(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, ActionLogger actionLogger) {
+            return new Client4Test(externalAPI, routeMapFactory, actionLogger);
         }
 
     }
 
     public static class Client4Test extends Client {
 
-        Client4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory) {
-            super(externalAPI, routeMapFactory);
+        Client4Test(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, ActionLogger actionLogger) {
+            super(externalAPI, routeMapFactory, actionLogger);
         }
 
         @Override

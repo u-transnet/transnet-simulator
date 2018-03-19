@@ -1,6 +1,6 @@
 package com.github.utransnet.simulator.route;
 
-import com.github.utransnet.simulator.actors.BaseInfObject;
+import com.github.utransnet.simulator.actors.CheckPoint;
 import com.github.utransnet.simulator.actors.Client;
 import com.github.utransnet.simulator.actors.Logist;
 import com.github.utransnet.simulator.actors.RailCar;
@@ -17,7 +17,7 @@ import java.util.Set;
 
 @Getter
 public class Scenario {
-    private final Set<BaseInfObject> infrastructure = new HashSet<>(32);
+    private final Set<CheckPoint> infrastructure = new HashSet<>(32);
     private final Set<Client> clients = new HashSet<>(32);
     private final Set<RailCar> railCars = new HashSet<>(32);
     @Setter
@@ -33,7 +33,7 @@ public class Scenario {
         railCars.add(railCar);
     }
 
-    public void addActor(BaseInfObject infObject) {
+    public void addActor(CheckPoint infObject) {
         infrastructure.add(infObject);
     }
 }

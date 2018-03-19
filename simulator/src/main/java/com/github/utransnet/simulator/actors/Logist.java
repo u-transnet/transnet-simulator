@@ -10,6 +10,8 @@ import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
+import com.github.utransnet.simulator.logging.LoggedAction;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
@@ -29,15 +31,22 @@ import java.util.List;
 public class Logist extends Actor {
     private final InputQueue<RouteMap> routeMapInputQueue;
     private final RouteMapFactory routeMapFactory;
+    private final ActionLogger actionLogger;
     private final int routeMapCreationTime = 60;
 
     @Setter
     private long routeMapPrice;
 
-    public Logist(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, InputQueue<RouteMap> routeMapInputQueue) {
+    public Logist(
+            ExternalAPI externalAPI,
+            RouteMapFactory routeMapFactory,
+            InputQueue<RouteMap> routeMapInputQueue,
+            ActionLogger actionLogger
+    ) {
         super(externalAPI);
         this.routeMapInputQueue = routeMapInputQueue;
         this.routeMapFactory = routeMapFactory;
+        this.actionLogger = actionLogger;
     }
 
     @PostConstruct
@@ -95,7 +104,9 @@ public class Logist extends Actor {
         }
     }
 
+    @LoggedAction
     private void sendRouteMap(ActorTaskContext context) {
+        actionLogger.logActorAction(this, "sendRouteMap", "Logist '%s' sending route map");
         RouteMap routeMap = context.getPayload("route-map");
         Assert.notNull(routeMap, "Logist can't send null map");
         UserAccount client = context.getPayload("client");
