@@ -1,7 +1,5 @@
 package com.github.utransnet.simulator.actors.task;
 
-import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +46,7 @@ public class ActorTaskContext {
             @Nullable BiFunction<ActorTaskContext, OperationEvent, Boolean> failPredicate,
             int waitSeconds
     ) {
-        if(successPredicate == null && waitSeconds == 0) {
+        if (successPredicate == null && waitSeconds == 0) {
             throw new RuntimeException("At least one finish condition should be set");
         }
         this.successEventType = successEventType;
@@ -82,8 +80,8 @@ public class ActorTaskContext {
     @SuppressWarnings("unchecked")
     public <T> T getPayload(String key) {
         Object o = payload.get(key);
-        if(o == null){
-            throw new RuntimeException("Missing value in context");
+        if (o == null) {
+            throw new RuntimeException("Missing value in context for key '" + key + "'");
         }
         return (T) o;
     }

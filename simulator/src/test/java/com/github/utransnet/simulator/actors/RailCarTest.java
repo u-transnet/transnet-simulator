@@ -99,7 +99,7 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         railCar.setUTransnetAccount(externalAPI.createAccount("rail-car"));
         UserAccount station = externalAPI.createAccount("start");
         UserAccount client = externalAPI.createAccount("client");
-        RouteMap routeMap = routeMapFactory.fromJson(json);
+        RouteMap routeMap = routeMapFactory.fromJsonForce(json);
         railCar.setRouteMap(routeMap);
         AssetAmount assetAmount = apiObjectFactory.getAssetAmount("test", 10);
 
@@ -157,7 +157,7 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         UserAccount station = externalAPI.createAccount("start");
         UserAccount client = externalAPI.createAccount("client");
         UserAccount checkpoint = externalAPI.createAccount("middle");
-        RouteMap routeMap = routeMapFactory.fromJson(json);
+        RouteMap routeMap = routeMapFactory.fromJsonForce(json);
         routeMap.goNext();
         railCar.setRouteMap(routeMap);
         AssetAmount assetAmount = apiObjectFactory.getAssetAmount("test", 10);
@@ -245,7 +245,7 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         railCar.setUTransnetAccount(externalAPI.createAccount("rail-car"));
         UserAccount reserve = externalAPI.createAccount("rail-car-reserve");
         UserAccount checkpoint = externalAPI.createAccount("middle");
-        RouteMap routeMap = routeMapFactory.fromJson(json);
+        RouteMap routeMap = routeMapFactory.fromJsonForce(json);
         routeMap.goNext();
         railCar.setRouteMap(routeMap);
         AssetAmount assetAmount = apiObjectFactory.getAssetAmount("test", 10);

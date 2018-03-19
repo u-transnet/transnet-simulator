@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SerializedRailCarInfo {
+public class SerializedInfrastructureInfo {
     SerializedUserInfo userInfo;
-    String startPointId;
+    boolean station;
 }

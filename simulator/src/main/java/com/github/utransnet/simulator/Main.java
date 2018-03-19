@@ -1,7 +1,9 @@
 package com.github.utransnet.simulator;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
+import com.github.utransnet.simulator.route.RouteMapFactory;
 import com.github.utransnet.simulator.route.ScenarioContainer;
 import com.github.utransnet.simulator.services.SimulationStartedException;
 import com.github.utransnet.simulator.services.Supervisor;
@@ -12,13 +14,13 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Created by Artem on 01.02.2018.
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @EntityScan(
         basePackageClasses = {Main.class, Jsr310JpaConverters.class}
 )
+@Import(AppConfig.class)
 public class Main {
 
 
@@ -39,15 +42,19 @@ public class Main {
 
     private final InputQueue<RouteMap> routeMapInputQueue;
 
+    private final RouteMapFactory routeMapFactory;
+
     @Autowired
     public Main(
             ApplicationContext context,
             Supervisor supervisor,
-            InputQueue<RouteMap> routeMapInputQueue
+            InputQueue<RouteMap> routeMapInputQueue,
+            RouteMapFactory routeMapFactory
             ) {
         this.context = context;
         this.supervisor = supervisor;
         this.routeMapInputQueue = routeMapInputQueue;
+        this.routeMapFactory = routeMapFactory;
     }
 
 
@@ -56,9 +63,16 @@ public class Main {
     }
 
     @RequestMapping("/import_route")
-    @ResponseStatus(HttpStatus.OK)
-    void importRoute(@RequestBody RouteMap routeMap) {
-        routeMapInputQueue.offer(routeMap);
+    ResponseEntity importRoute(@RequestBody String routeMapJson) {
+        RouteMap routeMap;
+        try {
+            routeMap = routeMapFactory.fromJsonForce(routeMapJson);
+            routeMapInputQueue.offer(routeMap);
+            return new ResponseEntity(HttpStatus.OK);
+        } catch (JsonParseException e) {
+            log.error("Incorrect RouteMap", e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @RequestMapping("/import_config")
@@ -67,7 +81,7 @@ public class Main {
             supervisor.init(scenario);
             return new ResponseEntity(HttpStatus.OK);
         } catch (SimulationStartedException e) {
-            log.error("Duplicate simulation inti requested", e);
+            log.error("Duplicate simulation init requested", e);
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
     }

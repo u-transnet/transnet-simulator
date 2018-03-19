@@ -79,4 +79,13 @@ public class MessageOperationH2 extends BaseOperationH2 implements MessageOperat
     public Set<String> getAffectedAccounts() {
         return new HashSet<>(Arrays.asList(from, to));
     }
+
+    @Override
+    public String toString() {
+        return "MessageOperationH2{" +
+                "from='" + from + '\'' +
+                ", to='" + to + '\'' +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

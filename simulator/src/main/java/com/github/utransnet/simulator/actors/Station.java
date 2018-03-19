@@ -15,13 +15,20 @@ import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Artem on 31.01.2018.
  */
+@Slf4j
 public class Station extends BaseInfObject {
 
     private final RouteMapFactory routeMapFactory;
@@ -29,6 +36,9 @@ public class Station extends BaseInfObject {
 
     private AssetAmount stationFee;
     private AssetAmount railCarFee;
+
+    @Setter
+    private CheckPoint checkPoint;
 
     public Station(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory) {
         super(externalAPI);
@@ -52,10 +62,12 @@ public class Station extends BaseInfObject {
     private void waitOrder(BaseOperation operation) {
         if (operation instanceof MessageOperation) {
             MessageOperation messageOperation = (MessageOperation) operation;
+            debug("New Message: " + operation);
             if (messageOperation.getTo().equals(getUTransnetAccount())) {
                 String message = messageOperation.getMessage();
                 RouteMap routeMap = routeMapFactory.fromJson(message);
                 if (routeMap != null && getUTransnetAccount().equals(routeMap.getStart())) {
+                    info("Received trip request from '" + messageOperation.getFrom().getName() + "'");
                     createTasks(messageOperation.getFrom().getId());
                 }
             }
@@ -102,7 +114,19 @@ public class Station extends BaseInfObject {
     }
 
     private void findVacantRailCar(ActorTaskContext context) {
-        context.addPayload("rail-car-id", "rail-car"); //TODO: UK-22
+        UserAccount currentRailCar = checkPoint.getCurrentRailCar();
+        if (currentRailCar != null) {
+            List<String> free = getUTransnetAccount().getMessages()
+                    .stream()
+                    .filter(mo -> mo.getTo().equals(getUTransnetAccount()))
+                    .filter(mo -> mo.getMessage().equals("FREE"))
+                    .map(MessageOperation::getFrom)
+                    .map(UserAccount::getId)
+                    .collect(Collectors.toList());
+            if (free.contains(currentRailCar.getId())) {
+                context.addPayload("rail-car-id", currentRailCar.getId());
+            }
+        }
     }
 
     private void callRailCar(ActorTaskContext context) {
@@ -129,7 +153,7 @@ public class Station extends BaseInfObject {
                 client,
                 getUTransnetAccount(),
                 stationFee,
-                getRouteMapString(context)
+                getRouteMap(context).getId() + "/" + context.getPayload("rail-car-id")
         );
     }
 
@@ -155,8 +179,10 @@ public class Station extends BaseInfObject {
         );
     }
 
+    // We assume that in case of incorrect RouteMap exception should be thrown before
+    @SneakyThrows
     private RouteMap getRouteMap(ActorTaskContext context) {
-        return routeMapFactory.fromJson(getRouteMapString(context));
+        return routeMapFactory.fromJsonForce(getRouteMapString(context));
     }
 
     private String getRouteMapString(ActorTaskContext context) {
@@ -165,5 +191,10 @@ public class Station extends BaseInfObject {
         MessageOperation last = Utils.getLast(getUTransnetAccount().getMessagesFrom(client));
         Assert.notNull(last, "Station must have incoming request from client");
         return last.getMessage();
+    }
+
+    @Override
+    protected Logger logger() {
+        return log;
     }
 }

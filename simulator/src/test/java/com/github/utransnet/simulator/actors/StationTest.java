@@ -56,7 +56,7 @@ public class StationTest extends SpringTest<StationTest.Config> {
 
         UserAccount client = externalAPI.createAccount("client");
         UserAccount railCar = externalAPI.createAccount("rail-car");
-        RouteMap routeMap = routeMapFactory.fromJson(json);
+        RouteMap routeMap = routeMapFactory.fromJsonForce(json);
 
         client.sendMessage(station.getUTransnetAccount(), json);
         station.update(0);

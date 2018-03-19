@@ -12,8 +12,10 @@ import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -35,6 +37,9 @@ public class CheckPoint extends BaseInfObject {
     private AssetAmount railCarFee;
     @Getter(AccessLevel.PROTECTED)
     private boolean gateClosed = true;
+
+    @Setter
+    private UserAccount logist;
 
     public CheckPoint(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
         super(externalAPI);
@@ -67,6 +72,7 @@ public class CheckPoint extends BaseInfObject {
 
     private void acceptRouteMap(OperationEvent event) {
         MessageOperation messageOperation = ((OperationEvent.MessageEvent) event).getObject();
+        info("Received upcoming RouteMap id: " + messageOperation.getMessage());
     }
 
     private void makeReservation(OperationEvent event) {
@@ -74,8 +80,10 @@ public class CheckPoint extends BaseInfObject {
         BaseOperation proposedOperation = proposal.getOperation();
         if (proposedOperation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation operation = (TransferOperation) proposedOperation;
-            if (operation.getTo().equals(getUTransnetAccount())) {
+            if (proposal.getFeePayer().equals(logist)) {
                 if (routeMapIdsToServe().contains(operation.getMemo())) {
+                    info("Making reservation for '" + operation.getMemo()
+                            + "/" + operation.getFrom().getId() + "'");
                     getUTransnetAccount().sendAsset(
                             reservation,
                             railCarFee,
@@ -90,10 +98,13 @@ public class CheckPoint extends BaseInfObject {
         Proposal proposal = ((OperationEvent.ProposalCreateEvent) event).getObject();
         BaseOperation proposedOperation = proposal.getOperation();
         if (proposedOperation.getOperationType() == OperationType.TRANSFER) {
+            debug("Received proposal for " + proposedOperation);
             ActorTask firstTask = null;
             TransferOperation operation = (TransferOperation) proposedOperation;
             if (operation.getFrom().equals(reservation)) {
+                info("Creating RailCar flow");
                 if (paidRouteMapIds().contains(operation.getMemo())) {
+                    debug("client has already paid");
                     //client has already paid
                     firstTask = ActorTask.builder()
                             .name("allow-entrance")
@@ -103,6 +114,7 @@ public class CheckPoint extends BaseInfObject {
                             .onEnd(this::allowEntrance)
                             .build();
                 } else if (routeMapIdsToServe().contains(operation.getMemo())) {
+                    debug("client hasn't paid yet");
                     //client hasn't paid yet
                     firstTask = ActorTask.builder()
                             .name("wait-and-allow-entrance")
@@ -114,6 +126,8 @@ public class CheckPoint extends BaseInfObject {
                             .onStart(context -> context.addPayload("proposal", proposal))
                             .onEnd(this::allowEntrance)
                             .build();
+                } else {
+                    debug("Unrecognized RouteMapId: " + operation.getMemo());
                 }
 
                 if (firstTask != null) {
@@ -125,7 +139,7 @@ public class CheckPoint extends BaseInfObject {
                             .onEnd(this::askPaymentFromRailCar)
                             .build()
                             .createNext()
-                            .name("close-gate")
+                            .name("wait-railc-car-exit-and-close-gate")
                             .executor(this)
                             .context(new ActorTaskContext(
                                     OperationEvent.Type.TRANSFER,
@@ -150,7 +164,7 @@ public class CheckPoint extends BaseInfObject {
             String routeMapId = getCurrentRouteMapId();
             if (routeMapId != null) {
                 getExternalAPI().sendProposal(
-                        railCar,
+                        getExternalAPI().getAccountByName(railCar.getId() + "-reserve"),
                         getUTransnetAccount(),
                         railCar,
                         getUTransnetAccount(),
@@ -179,14 +193,14 @@ public class CheckPoint extends BaseInfObject {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
         if (operation.getFrom().equals(context.getPayload("rail-car"))) {
             if (paidRouteMapIds().contains(operation.getMemo())) {
-            return true;
+                return true;
             }
         }
         return false;
     }
 
     @Nullable
-    protected UserAccount getCurrentRailCar() {
+    public UserAccount getCurrentRailCar() {
         List<UserAccount> allRailCars = reservation.getProposals()
                 .stream()
                 .map(Proposal::getOperation)
@@ -272,4 +286,9 @@ public class CheckPoint extends BaseInfObject {
                     .forEach(this::processEachOperation);
         }
     }*/
+
+    @Override
+    protected Logger logger() {
+        return log;
+    }
 }

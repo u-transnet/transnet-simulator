@@ -97,4 +97,8 @@ public class RouteMap {
         return false;
     }
 
+    public boolean isFinished() {
+        return !(step < route.size() - 1);
+    }
+
 }

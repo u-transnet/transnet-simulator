@@ -8,7 +8,7 @@ import com.github.utransnet.simulator.actors.factory.ActorFactory;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.impl.ExternalAPIConfig;
+import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
 import com.github.utransnet.simulator.route.AssetAmountDeserializer;
@@ -32,7 +32,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Configuration
 @Import({
         ActorConfig.class,
-        ExternalAPIConfig.class
+        ExternalAPIH2ImplConfig.class
+//        ExternalAPIConfig.class
 })
 public class AppConfig {
 
@@ -56,9 +57,11 @@ public class AppConfig {
     Supervisor supervisor(
             InputQueue<RouteMap> routeMapInputQueue,
             InputQueue<Client> clientInputQueue,
-            ActorFactory actorFactory
+            ActorFactory actorFactory,
+            ExternalAPI externalAPI,
+            APIObjectFactory apiObjectFactory
     ) {
-        return new SupervisorImpl(routeMapInputQueue, clientInputQueue, actorFactory);
+        return new SupervisorImpl(routeMapInputQueue, clientInputQueue, actorFactory, externalAPI, apiObjectFactory);
     }
 
     @Bean

@@ -116,4 +116,15 @@ public class TransferOperationH2 extends BaseOperationH2 implements TransferOper
     public Set<String> getAffectedAccounts() {
         return new HashSet<>(Arrays.asList(from, to));
     }
+
+    @Override
+    public String toString() {
+        return "TransferOperationH2{" +
+                "from='" + from + '\'' +
+                ", to='" + to + '\'' +
+                ", asset='" + asset + '\'' +
+                ", amount=" + amount +
+                ", memo='" + memo + '\'' +
+                '}';
+    }
 }
