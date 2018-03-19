@@ -40,7 +40,7 @@ public class RailCar extends BaseInfObject {
     private AssetAmount checkPointFee;
 
     private UserAccount currentCheckPoint;
-    @Getter(AccessLevel.PROTECTED)
+    @Getter
     private UserAccount reservation;
 
     private int avgSpeed = 60;
@@ -402,7 +402,7 @@ public class RailCar extends BaseInfObject {
     }
 
     @Nullable
-    private UserAccount getStationAccount() {
+    public UserAccount getStationAccount() {
         if (routeMap != null) {
             return routeMap.getStart();
         }
@@ -410,7 +410,7 @@ public class RailCar extends BaseInfObject {
     }
 
     @Nullable
-    private String getClientId() {
+    public String getClientId() {
         UserAccount stationAccount = getStationAccount();
         if (stationAccount != null) {
             List<TransferOperation> transfers = getUTransnetAccount().getTransfersFrom(stationAccount);
@@ -426,7 +426,7 @@ public class RailCar extends BaseInfObject {
     }
 
     @Nullable
-    private UserAccount getClient() {
+    public UserAccount getClient() {
         String clientId = getClientId();
         if (clientId == null) {
             return null;

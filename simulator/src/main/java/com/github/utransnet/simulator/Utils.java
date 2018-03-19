@@ -1,6 +1,9 @@
 package com.github.utransnet.simulator;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Artem on 07.02.2018.
@@ -69,5 +72,12 @@ public class Utils {
      */
     public static <T> boolean isEmpty( final List<T> list ) {
         return list == null || list.isEmpty();
+    }
+
+
+    public static <T> Set<T> setOf(T... objs) {
+        Set<T> set = new HashSet<T>();
+        set.addAll(Arrays.asList(objs));
+        return set;
     }
 }

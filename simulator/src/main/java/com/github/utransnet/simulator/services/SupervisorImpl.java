@@ -6,6 +6,7 @@ import com.github.utransnet.simulator.actors.factory.ActorFactory;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.logging.PositionMonitoring;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.Scenario;
@@ -30,6 +31,7 @@ public class SupervisorImpl implements Supervisor {
     private final ActorFactory actorFactory;
     private final ExternalAPI externalAPI;
     private final APIObjectFactory apiObjectFactory;
+    private final PositionMonitoring positionMonitoring;
 
     private final String supervisorId = "supervisor";
     private UserAccount supervisorAccount;
@@ -43,13 +45,14 @@ public class SupervisorImpl implements Supervisor {
             InputQueue<Client> clientInputQueue,
             ActorFactory actorFactory,
             ExternalAPI externalAPI,
-            APIObjectFactory apiObjectFactory
-    ) {
+            APIObjectFactory apiObjectFactory,
+            PositionMonitoring positionMonitoring) {
         this.routeMapInputQueue = routeMapInputQueue;
         this.clientInputQueue = clientInputQueue;
         this.actorFactory = actorFactory;
         this.externalAPI = externalAPI;
         this.apiObjectFactory = apiObjectFactory;
+        this.positionMonitoring = positionMonitoring;
         actors = new HashSet<>(128);
     }
 
@@ -184,6 +187,7 @@ public class SupervisorImpl implements Supervisor {
         if (!started) {
             supervisorAccount = externalAPI.getAccountById(supervisorId);
             Scenario scenario = loadScenario(scenarioContainer);
+            positionMonitoring.init(scenario);
 
             String stations = actors.stream()
                     .filter(actor -> actor instanceof Station)

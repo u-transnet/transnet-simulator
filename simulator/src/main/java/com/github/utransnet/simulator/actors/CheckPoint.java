@@ -34,7 +34,7 @@ public class CheckPoint extends BaseInfObject {
 
     private final APIObjectFactory apiObjectFactory;
     private final ActionLogger actionLogger;
-    @Getter(AccessLevel.PROTECTED)
+    @Getter
     private UserAccount reservation;
     private String lastOperationOnReserve = null;
     private AssetAmount railCarFee;

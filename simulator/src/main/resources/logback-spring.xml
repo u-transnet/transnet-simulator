@@ -27,6 +27,17 @@
         <appender-ref ref="actions"/>
     </logger>
 
+    <appender name="movements" class="ch.qos.logback.core.FileAppender">
+        <file>logs/movements-${byDay}.log</file>
+        <encoder>
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+    <logger name="com.github.utransnet.simulator.logging.PositionMonitoring">
+        <level value="ALL"/>
+        <appender-ref ref="movements"/>
+    </logger>
+
     <logger name="logging.level.com.github.utransnet">
         <level value="DEBUG"/>
         <appender-ref ref="CONSOLE"/>

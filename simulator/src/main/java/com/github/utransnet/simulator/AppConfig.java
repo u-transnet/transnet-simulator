@@ -10,6 +10,7 @@ import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
 import com.github.utransnet.simulator.logging.LoggingConfig;
+import com.github.utransnet.simulator.logging.PositionMonitoring;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
 import com.github.utransnet.simulator.route.AssetAmountDeserializer;
@@ -52,6 +53,14 @@ public class AppConfig {
         return new InputQueueImpl<>(new LinkedBlockingQueue<>(100));
     }
 
+    @Bean
+    @Scope("singleton")
+    @Autowired
+    PositionMonitoring positionMonitoring(ExternalAPI externalAPI) {
+        return new PositionMonitoring(externalAPI);
+    }
+
+
 
     @Bean
     @Scope("singleton")
@@ -61,9 +70,17 @@ public class AppConfig {
             InputQueue<Client> clientInputQueue,
             ActorFactory actorFactory,
             ExternalAPI externalAPI,
-            APIObjectFactory apiObjectFactory
+            APIObjectFactory apiObjectFactory,
+            PositionMonitoring positionMonitoring
     ) {
-        return new SupervisorImpl(routeMapInputQueue, clientInputQueue, actorFactory, externalAPI, apiObjectFactory);
+        return new SupervisorImpl(
+                routeMapInputQueue,
+                clientInputQueue,
+                actorFactory,
+                externalAPI,
+                apiObjectFactory,
+                positionMonitoring
+        );
     }
 
     @Bean
