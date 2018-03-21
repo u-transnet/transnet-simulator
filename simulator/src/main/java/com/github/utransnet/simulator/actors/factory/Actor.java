@@ -231,4 +231,12 @@ public class Actor {
     protected Logger logger() {
         return log;
     }
+
+    public UserAccount findAccountFromReservation(UserAccount userAccount) {
+        return getExternalAPI().getAccountByName(userAccount.getName().replace("-reserve", ""));
+    }
+
+    public UserAccount findReservationFromAccount(UserAccount userAccount) {
+        return getExternalAPI().getAccountByName(userAccount.getName() + "-reserve");
+    }
 }

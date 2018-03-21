@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * Created by Artem on 31.01.2018.
  */
 @Slf4j
-public class RailCar extends BaseInfObject {
+public class RailCar extends BaseInfObject implements ActorWithReservation {
 
     private final RouteMapFactory routeMapFactory;
     private final APIObjectFactory apiObjectFactory;
@@ -324,7 +324,7 @@ public class RailCar extends BaseInfObject {
         }
 
         reservation.approveProposal(proposals.get(0));
-
+        debug("Leaving check point '" + proposals.get(0).getFeePayer().getName() + "'");
         start(context);
     }
 

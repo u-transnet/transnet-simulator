@@ -103,9 +103,13 @@ public class TransactionLogger {
     @After(value = "onApproveProposal(approvingAccount,proposal)", argNames = "joinPoint,approvingAccount,proposal")
     private void logApproveProposal(JoinPoint joinPoint, UserAccount approvingAccount, Proposal proposal) {
         log.trace(String.format(
-                "%14s: proposalId=<%s>|approveAdded=<%s>|isApproved=<%s>|neededApprovals=<%s>",
+                "%14s: proposalId=<%s>|approveAdded=<%s>|isApproved=<%s>|neededApprovals=<%s>|proposedOp=<%s>",
                 "APPROVE_ADDED",
-                proposal.getId(), approvingAccount.getName(), proposal.approved(), proposal.neededApprovals()
+                proposal.getId(),
+                approvingAccount.getName(),
+                proposal.approved(),
+                proposal.neededApprovals(),
+                proposal.getOperation().toString()
         ));
     }
 

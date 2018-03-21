@@ -147,7 +147,7 @@ public class CheckPoint extends BaseInfObject {
                             .executor(this)
                             .context(new ActorTaskContext(
                                     OperationEvent.Type.TRANSFER,
-                                    this::checkIfRailCarApproveProposal
+                                    this::checkIfRailCarApprovedProposal
                             ))
                             .onEnd(context -> closeGate())
                             .build();
@@ -165,6 +165,7 @@ public class CheckPoint extends BaseInfObject {
         UserAccount railCar = getCurrentRailCar();
         if (railCar != null) {
             context.addPayload("rail-car", railCar);
+            context.addPayload("rail-car-reserve", getExternalAPI().getAccountByName(railCar.getId() + "-reserve"));
             String routeMapId = getCurrentRouteMapId();
             if (routeMapId != null) {
                 getExternalAPI().sendProposal(
@@ -192,9 +193,9 @@ public class CheckPoint extends BaseInfObject {
         reservation.approveProposal(proposal);
     }
 
-    private boolean checkIfRailCarApproveProposal(ActorTaskContext context, OperationEvent event) {
+    private boolean checkIfRailCarApprovedProposal(ActorTaskContext context, OperationEvent event) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
-        if (operation.getFrom().equals(context.getPayload("rail-car"))) {
+        if (operation.getFrom().equals(context.getPayload("rail-car-reserve"))) {
             if (paidRouteMapIds().contains(operation.getMemo())) {
                 return true;
             }
@@ -213,10 +214,15 @@ public class CheckPoint extends BaseInfObject {
                 .filter(userAccount -> !userAccount.equals(reservation))
                 .collect(Collectors.toList());
 
-        List<UserAccount> wentOutRailCars = getUTransnetAccount().getTransfers()
+        List<UserAccount> wentOutRailCars = getUTransnetAccount().getProposals()
                 .stream()
+                .filter(Proposal::approved)
+                .map(Proposal::getOperation)
+                .filter(operation -> operation.getOperationType() == OperationType.TRANSFER)
+                .map(operation -> (TransferOperation) operation)
                 .filter(op -> op.getTo().equals(getUTransnetAccount()))
                 .map(TransferOperation::getFrom)
+                .map(this::findAccountFromReservation)
                 .collect(Collectors.toList());
 
         List<UserAccount> railCarsInCheckPoint = new ArrayList<>(3);
@@ -266,13 +272,13 @@ public class CheckPoint extends BaseInfObject {
 
     @LoggedAction
     private void openGate() {
-        actionLogger.logActorAction(this, "allowEntrance", "CheckPoint '%s' opened gate");
+        actionLogger.logActorAction(this, "checkPointInUse", "CheckPoint '%s' opened gate");
         gateClosed = false;
     }
 
     @LoggedAction
     private void closeGate() {
-        actionLogger.logActorAction(this, "allowEntrance", "CheckPoint '%s' closed gate");
+        actionLogger.logActorAction(this, "checkPointFree", "CheckPoint '%s' closed gate");
         gateClosed = true;
     }
 
