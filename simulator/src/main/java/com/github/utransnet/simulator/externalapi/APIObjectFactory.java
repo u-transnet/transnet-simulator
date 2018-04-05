@@ -13,6 +13,6 @@ public interface APIObjectFactory {
         return getAssetAmount(getAsset(id), amount);
     }
 
-    UserAccount userAccount(String name);
+    UserAccount userAccount(String id);
 
 }

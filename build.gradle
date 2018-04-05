@@ -3,6 +3,7 @@ buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        mavenLocal()
     }
     dependencies {
 
@@ -75,6 +76,7 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
+        mavenLocal()
     }
     configurations.create('agents')
 
@@ -123,7 +125,8 @@ project(':simulator') {
 
         compile "com.squareup.okhttp3:okhttp:$okhttpVersion"
 
-//        compile 'com.github.utransnet:graphenj:0.4.2' // not yet published
+        compile 'com.github.utransnet:graphenej:0.5.2.1' // not yet published
+//        compile files("libs/graphenej-0.4.6.jar")
     }
 
 

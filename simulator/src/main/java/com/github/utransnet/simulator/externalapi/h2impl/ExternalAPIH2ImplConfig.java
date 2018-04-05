@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -18,6 +19,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @EntityScan(basePackageClasses = {ExternalAPIH2ImplConfig.class, Jsr310JpaConverters.class})
 @EnableJpaRepositories(basePackageClasses={ExternalAPIH2ImplConfig.class})
+@Profile({"h2", "default"})
 public class ExternalAPIH2ImplConfig {
 
     /*@Bean

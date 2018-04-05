@@ -96,7 +96,6 @@ public class Logist extends Actor {
             getExternalAPI().sendProposal(
                     client,
                     checkPoint,
-                    client,
                     getUTransnetAccount(),
                     route.get(i).getFee(),
                     routeMap.getId()

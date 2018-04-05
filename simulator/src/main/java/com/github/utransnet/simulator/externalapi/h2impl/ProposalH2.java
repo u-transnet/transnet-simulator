@@ -78,10 +78,20 @@ public class ProposalH2 implements Proposal {
 
 
     @Override
-    public List<String> neededApproves() {
+    public List<String> neededApprovals() {
         List<String> tmp = new ArrayList<>(approvesToAdd);
         tmp.removeAll(approvesAdded);
         return tmp;
+    }
+
+    @Override
+    public List<String> requiredApprovals() {
+        return approvesToAdd;
+    }
+
+    @Override
+    public List<String> availableApprovals() {
+        return approvesAdded;
     }
 
 
@@ -90,8 +100,8 @@ public class ProposalH2 implements Proposal {
         return apiObjectFactory.operationFromJson(operationJson);
     }
 
-    @Override
-    public void addApprove(UserAccount userAccount) {
+
+    void addApprove(UserAccount userAccount) {
         approvesAdded.add(userAccount.getId());
     }
 

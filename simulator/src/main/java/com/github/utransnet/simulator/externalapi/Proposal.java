@@ -11,11 +11,35 @@ public interface Proposal extends ExternalObject {
 
     boolean approved();
 
+    @Deprecated
+        //TODO: remove method
     UserAccount getFeePayer();
 
-    List<String> neededApproves();
+    /**
+     * In Our case we use only active approvals, not owner
+     *
+     * @return
+     */
+    List<String> neededApprovals();
 
+    /**
+     * In Our case we use only active approvals, not owner
+     *
+     * @return
+     */
+    List<String> requiredApprovals();
+
+    /**
+     * In Our case we use only active approvals, not owner
+     *
+     * @return
+     */
+    List<String> availableApprovals();
+
+    /**
+     * Propopasl can contain many operations, but in our case we use only one
+     *
+     * @return
+     */
     BaseOperation getOperation();
-
-    void addApprove(UserAccount userAccount);
 }

@@ -86,8 +86,8 @@ public class StationTest extends SpringTest<StationTest.Config> {
         Proposal proposal = Utils.getLast(client.getProposals());
         assertNotNull(proposal);
         assertEquals(station.getUTransnetAccount(), proposal.getFeePayer());
-        assertEquals(1, proposal.neededApproves().size());
-        assertEquals(client.getId(), proposal.neededApproves().get(0));
+        assertEquals(1, proposal.neededApprovals().size());
+        assertEquals(client.getId(), proposal.neededApprovals().get(0));
 
         assertEquals(OperationType.TRANSFER, proposal.getOperation().getOperationType());
         TransferOperation transferOperation = (TransferOperation) proposal.getOperation();

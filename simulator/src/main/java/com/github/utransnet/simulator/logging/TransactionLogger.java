@@ -39,12 +39,11 @@ public class TransactionLogger {
     }
 
     @Pointcut(value = "execution(* com.github.utransnet.simulator.externalapi.ExternalAPI.sendProposal(..))" +
-            " && args(from,to,proposingAccount,feePayer,assetAmount,memo)",
-            argNames = "from,to,proposingAccount,feePayer,assetAmount,memo")
+            " && args(from,to,feePayer,assetAmount,memo)",
+            argNames = "from,to,feePayer,assetAmount,memo")
     private void onSendProposal(
             UserAccount from,
             UserAccount to,
-            UserAccount proposingAccount,
             UserAccount feePayer,
             AssetAmount assetAmount,
             String memo
@@ -84,30 +83,29 @@ public class TransactionLogger {
         ));
     }
 
-    @After(value = "onSendProposal(from,to,proposingAccount,feePayer,assetAmount,memo)",
-            argNames = "joinPoint,from,to,proposingAccount,feePayer,assetAmount,memo")
+    @After(value = "onSendProposal(from,to,feePayer,assetAmount,memo)",
+            argNames = "joinPoint,from,to,feePayer,assetAmount,memo")
     private void logSendProposal(
             JoinPoint joinPoint,
             UserAccount from,
             UserAccount to,
-            UserAccount proposingAccount,
             UserAccount feePayer,
             AssetAmount assetAmount,
             String memo
     ) {
         log.trace(String.format(
-                "%14s: from=<%s>|to=<%s>|assetAmount=<%s>|memo=<%s>|proposingAccount=<%s>|feePayer=<%s>",
+                "%14s: from=<%s>|to=<%s>|assetAmount=<%s>|memo=<%s>|feePayer=<%s>",
                 "PROPOSAL",
-                from.getName(), to.getName(), assetAmount, memo, proposingAccount.getName(), feePayer.getName()
+                from.getName(), to.getName(), assetAmount, memo, feePayer.getName()
         ));
     }
 
     @After(value = "onApproveProposal(approvingAccount,proposal)", argNames = "joinPoint,approvingAccount,proposal")
     private void logApproveProposal(JoinPoint joinPoint, UserAccount approvingAccount, Proposal proposal) {
         log.trace(String.format(
-                "%14s: proposalId=<%s>|approveAdded=<%s>|isApproved=<%s>|neededApproves=<%s>",
+                "%14s: proposalId=<%s>|approveAdded=<%s>|isApproved=<%s>|neededApprovals=<%s>",
                 "APPROVE_ADDED",
-                proposal.getId(), approvingAccount.getName(), proposal.approved(), proposal.neededApproves()
+                proposal.getId(), approvingAccount.getName(), proposal.approved(), proposal.neededApprovals()
         ));
     }
 
