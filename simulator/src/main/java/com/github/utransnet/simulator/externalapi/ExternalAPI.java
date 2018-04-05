@@ -24,7 +24,6 @@ public abstract class ExternalAPI {
     public abstract void sendProposal(
             UserAccount from,
             UserAccount to,
-            UserAccount proposingAccount,
             UserAccount feePayer,
             AssetAmount assetAmount,
             String memo
@@ -46,7 +45,7 @@ public abstract class ExternalAPI {
     public abstract List<Proposal> getAccountProposals(UserAccount account);
 
     @SuppressWarnings("unchecked")
-    protected <T extends BaseOperation> List<T> filterHistory(UserAccount account, OperationType operationType) {
+    private <T extends BaseOperation> List<T> filterHistory(UserAccount account, OperationType operationType) {
         return getAccountHistory(account, operationType)
                 .stream()
                 .filter(baseOperation -> baseOperation.getOperationType() == operationType)

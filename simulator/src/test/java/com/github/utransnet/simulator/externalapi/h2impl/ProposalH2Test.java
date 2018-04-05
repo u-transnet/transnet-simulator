@@ -68,14 +68,14 @@ public class ProposalH2Test extends SpringTest<ProposalH2Test.Config> {
 
         ProposalH2 saved1 = proposalH2Repository.findAll().iterator().next();
 
-        assertEquals(1, saved1.neededApproves().size());
-        assertEquals(approver.getId(), saved1.neededApproves().get(0));
+        assertEquals(1, saved1.neededApprovals().size());
+        assertEquals(approver.getId(), saved1.neededApprovals().get(0));
         assertFalse(saved1.approved());
         proposalH2Repository.save(saved1);
 
         ProposalH2 saved2 = proposalH2Repository.findAll().iterator().next();
         saved2.addApprove(approver);
-        assertEquals(0, saved2.neededApproves().size());
+        assertEquals(0, saved2.neededApprovals().size());
         assertTrue(saved2.approved());
 
         assertEquals(1, proposalH2Repository.count());

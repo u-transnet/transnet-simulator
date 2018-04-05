@@ -8,6 +8,7 @@ import com.github.utransnet.simulator.actors.factory.ActorFactory;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
+import com.github.utransnet.simulator.externalapi.graphenej.ExternalAPIGrapheneConfig;
 import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
 import com.github.utransnet.simulator.logging.LoggingConfig;
 import com.github.utransnet.simulator.logging.PositionMonitoring;
@@ -35,6 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Import({
         ActorConfig.class,
         ExternalAPIH2ImplConfig.class,
+        ExternalAPIGrapheneConfig.class,
         LoggingConfig.class
 //        ExternalAPIConfig.class
 })

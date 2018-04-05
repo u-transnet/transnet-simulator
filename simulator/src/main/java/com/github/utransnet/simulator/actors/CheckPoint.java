@@ -170,7 +170,6 @@ public class CheckPoint extends BaseInfObject {
                 getExternalAPI().sendProposal(
                         getExternalAPI().getAccountByName(railCar.getId() + "-reserve"),
                         getUTransnetAccount(),
-                        railCar,
                         getUTransnetAccount(),
                         railCarFee,
                         routeMapId
@@ -190,7 +189,7 @@ public class CheckPoint extends BaseInfObject {
     private void allowEntrance(ActorTaskContext context) {
         Proposal proposal = context.getPayload("proposal");
         openGate();
-        getUTransnetAccount().approveProposal(proposal);
+        reservation.approveProposal(proposal);
     }
 
     private boolean checkIfRailCarApproveProposal(ActorTaskContext context, OperationEvent event) {

@@ -42,7 +42,6 @@ public class ExternalAPIH2 extends ExternalAPI {
     public void sendProposal(
             UserAccount from,
             UserAccount to,
-            UserAccount proposingAccount,
             UserAccount feePayer,
             AssetAmount assetAmount,
             String memo
@@ -51,7 +50,7 @@ public class ExternalAPIH2 extends ExternalAPI {
                 apiObjectFactory, from, to, assetAmount, memo
         );
         ProposalH2 proposalH2 = new ProposalH2(
-                apiObjectFactory, proposingAccount, feePayer, transferOperation
+                apiObjectFactory, from, feePayer, transferOperation
         );
         proposalH2.setCreationDate(Instant.now());
         proposalRepository.save(proposalH2);
@@ -59,7 +58,6 @@ public class ExternalAPIH2 extends ExternalAPI {
         Set<String> accsToNotify = Stream.of(
                 from.getId(),
                 to.getId(),
-                proposingAccount.getId(),
                 feePayer.getId()
         ).collect(Collectors.toSet());
         fireAccountOperation(accsToNotify, proposalH2);
@@ -75,7 +73,7 @@ public class ExternalAPIH2 extends ExternalAPI {
         accsToNotify.add(approvingAccount.getId());
         ExternalObject updaterObject = proposalH2;
 
-        if (proposalH2.neededApproves().contains(approvingAccount.getId())) {
+        if (proposalH2.neededApprovals().contains(approvingAccount.getId())) {
             proposalH2.addApprove(approvingAccount);
             proposalRepository.save(proposalH2);
             BaseOperation operation = proposalH2.getOperation();
@@ -171,9 +169,9 @@ public class ExternalAPIH2 extends ExternalAPI {
         allProposals.forEach(proposalH2 -> {
             proposalH2.setApiObjectFactory(apiObjectFactory);
             BaseOperation operation = proposalH2.getOperation();
-            if (proposalH2.neededApproves().contains(account.getId())
+            if (proposalH2.neededApprovals().contains(account.getId())
                     || operation.getAffectedAccounts().contains(account.getId())) {
-                HashSet<String> set = new HashSet<>(proposalH2.neededApproves());
+                HashSet<String> set = new HashSet<>(proposalH2.neededApprovals());
                 set.addAll(operation.getAffectedAccounts());
                 ProposalCreateOperationH2 proposalCreateOperation = new ProposalCreateOperationH2(proposalH2, set);
                 proposalCreateOperation.creationDate = proposalH2.creationDate;
@@ -194,7 +192,7 @@ public class ExternalAPIH2 extends ExternalAPI {
         return StreamSupport.stream(proposalRepository.findAll().spliterator(), false)
                 .peek(op -> op.setApiObjectFactory(apiObjectFactory))
                 .filter(
-                        proposalH2 -> proposalH2.neededApproves().contains(account.getId())
+                        proposalH2 -> proposalH2.neededApprovals().contains(account.getId())
                                 || proposalH2.getOperation().getAffectedAccounts().contains(account.getId())
                 )
                 .collect(Collectors.toList());

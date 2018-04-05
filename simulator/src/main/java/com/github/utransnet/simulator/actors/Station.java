@@ -165,7 +165,6 @@ public class Station extends BaseInfObject {
         getExternalAPI().sendProposal(
                 client,
                 getUTransnetAccount(),
-                client,
                 getUTransnetAccount(),
                 stationFee,
                 getRouteMap(context).getId() + "/" + context.getPayload("rail-car-id")

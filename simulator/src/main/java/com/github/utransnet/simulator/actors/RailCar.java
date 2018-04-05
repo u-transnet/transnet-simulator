@@ -274,7 +274,6 @@ public class RailCar extends BaseInfObject {
         getExternalAPI().sendProposal(
                 client,
                 nextCheckPoint,
-                client,
                 getUTransnetAccount(),
                 routeMap.getNextFee(),
                 routeMap.getId()
@@ -284,7 +283,6 @@ public class RailCar extends BaseInfObject {
         getExternalAPI().sendProposal(
                 getExternalAPI().getAccountByName(nextCheckPoint.getId() + "-reserve"),
                 getUTransnetAccount(),
-                nextCheckPoint,
                 getUTransnetAccount(),
                 feeAmount,
                 routeMap.getId()
@@ -383,7 +381,6 @@ public class RailCar extends BaseInfObject {
         getExternalAPI().sendProposal(
                 client,
                 getUTransnetAccount(),
-                client,
                 getUTransnetAccount(),
                 routeMap.getNextRailCarFee(),
                 routeMap.getId() + "/" + routeMap.getNextAccount().getId()

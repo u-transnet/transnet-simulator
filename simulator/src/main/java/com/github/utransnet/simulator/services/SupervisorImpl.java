@@ -122,7 +122,6 @@ public class SupervisorImpl implements Supervisor {
                     supervisorAccount,
                     station,
                     supervisorAccount,
-                    supervisorAccount,
                     apiObjectFactory.getAssetAmount("UTT", 10),
                     stubRouteMapId
             );
@@ -135,7 +134,6 @@ public class SupervisorImpl implements Supervisor {
             externalAPI.sendProposal(
                     reservation,
                     railCar.getUTransnetAccount(),
-                    station,
                     railCar.getUTransnetAccount(),
                     apiObjectFactory.getAssetAmount("RA", 10),
                     stubRouteMapId
