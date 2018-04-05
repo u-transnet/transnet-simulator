@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import java.time.Instant;
@@ -35,32 +36,51 @@ public class ProposalH2 implements Proposal {
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
     @CollectionTable(name = "approves_added", joinColumns = @JoinColumn(name = "proposal_h2_id"))
-    private final List<String> approvesAdded = new ArrayList<>(4);
+    private final List<String> approvesAdded;
 
     @ElementCollection(fetch=FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
     @CollectionTable(name = "approves_to_add", joinColumns = @JoinColumn(name = "proposal_h2_id"))
-    private final List<String> approvesToAdd = new ArrayList<>(4);
+    private final List<String> approvesToAdd;
 
 
+    @Nullable
     private String feePayer;
 
     @Column(length = 1024)
     private String operationJson;
 
-    public ProposalH2() {
+    ProposalH2() {
+        approvesToAdd = new ArrayList<>(4);
+        approvesAdded = new ArrayList<>(4);
     }
 
     ProposalH2(
             APIObjectFactoryH2 apiObjectFactory,
             UserAccount proposingAccount,
-            UserAccount feePayer,
+            @Nullable UserAccount feePayer,
             BaseOperation operation
     ) {
+        this();
         this.apiObjectFactory = apiObjectFactory;
-        this.feePayer = feePayer.getId();
-        approvesToAdd.add(proposingAccount.getId());
+        this.feePayer = (feePayer != null) ? feePayer.getId() : null;
         this.operationJson = apiObjectFactory.operationToJson(operation);
+    }
+
+    protected ProposalH2(
+            APIObjectFactoryH2 apiObjectFactory,
+            Long id,
+            Instant creationDate,
+            List<String> approvesAdded,
+            List<String> approvesToAdd,
+            String operationJson
+    ) {
+        this.apiObjectFactory = apiObjectFactory;
+        this.id = id;
+        this.creationDate = creationDate;
+        this.approvesAdded = approvesAdded;
+        this.approvesToAdd = approvesToAdd;
+        this.operationJson = operationJson;
     }
 
     @Override
@@ -71,9 +91,14 @@ public class ProposalH2 implements Proposal {
     }
 
 
+    @Nullable
     @Override
     public UserAccount getFeePayer() {
-        return apiObjectFactory.userAccount(feePayer);
+        if (feePayer != null) {
+            return apiObjectFactory.userAccount(feePayer);
+        } else {
+            return null;
+        }
     }
 
 
@@ -124,5 +149,16 @@ public class ProposalH2 implements Proposal {
                 ", feePayer='" + feePayer + '\'' +
                 ", operationJson='" + operationJson + '\'' +
                 '}';
+    }
+
+    ProposalH2 copyWithoutFeePayer() {
+        return new ProposalH2(
+                apiObjectFactory,
+                id,
+                creationDate,
+                approvesAdded,
+                approvesToAdd,
+                operationJson
+        );
     }
 }

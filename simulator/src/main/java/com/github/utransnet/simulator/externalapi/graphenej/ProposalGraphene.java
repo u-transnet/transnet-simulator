@@ -25,6 +25,10 @@ public class ProposalGraphene implements Proposal, GrapheneWrapper<com.github.ut
     private List<String> requiredApprovals;
     private List<String> availableApprovals;
 
+    @Nullable
+    @Getter
+    @Setter(AccessLevel.PACKAGE)
+    UserAccount feePayer;
 
     @Nullable
     @Getter
@@ -80,11 +84,6 @@ public class ProposalGraphene implements Proposal, GrapheneWrapper<com.github.ut
         return requiredApprovals().isEmpty();
     }
 
-    @Override
-    public UserAccount getFeePayer() {
-        //TODO: remove
-        return null;
-    }
 
     @Override
     public List<String> neededApprovals() {

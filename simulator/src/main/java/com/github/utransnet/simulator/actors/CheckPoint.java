@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -81,7 +82,7 @@ public class CheckPoint extends BaseInfObject {
         BaseOperation proposedOperation = proposal.getOperation();
         if (proposedOperation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation operation = (TransferOperation) proposedOperation;
-            if (proposal.getFeePayer().equals(logist)) {
+            if (Objects.equals(proposal.getFeePayer(), logist)) {
                 if (routeMapIdsToServe().contains(operation.getMemo())) {
                     info("Making reservation for '" + operation.getMemo()
                             + "/" + operation.getFrom().getId() + "'");

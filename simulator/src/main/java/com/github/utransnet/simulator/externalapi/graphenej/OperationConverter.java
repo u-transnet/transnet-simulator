@@ -44,7 +44,11 @@ public class OperationConverter {
 
             case PROPOSAL_CREATE:
                 ProposalCreateOperation proposalCreateOperation = (ProposalCreateOperation) baseOperation;
-                return new ProposalCreateOperationGraphene(proposalCreateOperation, this);
+                return new ProposalCreateOperationGraphene(
+                        objectFactory,
+                        proposalCreateOperation,
+                        this
+                );
 
             case PROPOSAL_DELETE:
                 throw new IllegalArgumentException("Unsuported OperationType: " + type.name());

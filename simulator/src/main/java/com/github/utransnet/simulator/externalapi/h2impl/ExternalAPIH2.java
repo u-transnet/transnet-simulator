@@ -199,11 +199,12 @@ public class ExternalAPIH2 extends ExternalAPI {
         return StreamSupport.stream(proposalRepository.findAll().spliterator(), false)
                 .peek(op -> op.setApiObjectFactory(apiObjectFactory))
                 // hide approved proposal, coz it can't be received in real graphene
-                .filter(proposalH2 -> !proposalH2.approved())
+//                .filter(proposalH2 -> !proposalH2.approved())
                 .filter(
                         proposalH2 -> proposalH2.neededApprovals().contains(account.getId())
                                 || proposalH2.getOperation().getAffectedAccounts().contains(account.getId())
                 )
+                .map(ProposalH2::copyWithoutFeePayer)
                 .collect(Collectors.toList());
     }
 

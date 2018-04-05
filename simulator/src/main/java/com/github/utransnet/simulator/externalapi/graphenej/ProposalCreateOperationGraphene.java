@@ -1,6 +1,7 @@
 package com.github.utransnet.simulator.externalapi.graphenej;
 
 import com.github.utransnet.graphenej.operations.TransferOperation;
+import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOperation;
 import lombok.Getter;
 
@@ -17,6 +18,7 @@ public class ProposalCreateOperationGraphene extends BaseOperationGraphene imple
     private ProposalGraphene proposal;
 
     ProposalCreateOperationGraphene(
+            APIObjectFactory apiObjectFactory,
             com.github.utransnet.graphenej.operations.ProposalCreateOperation proposalCreateOperation,
             OperationConverter operationConverter
     ) {
@@ -27,6 +29,7 @@ public class ProposalCreateOperationGraphene extends BaseOperationGraphene imple
                 Collections.singletonList(op.getFrom().getObjectId()),
                 operationConverter.fromGrapheneOp(op)
         );
+        proposal.setFeePayer(apiObjectFactory.userAccount(proposalCreateOperation.getFeePayingAccount().getObjectId()));
     }
 
     @Override
