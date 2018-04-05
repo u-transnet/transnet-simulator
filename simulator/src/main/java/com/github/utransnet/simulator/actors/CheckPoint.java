@@ -6,10 +6,7 @@ import com.github.utransnet.simulator.actors.task.ActorTaskContext;
 import com.github.utransnet.simulator.actors.task.EventListener;
 import com.github.utransnet.simulator.actors.task.OperationEvent;
 import com.github.utransnet.simulator.externalapi.*;
-import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
-import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
-import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.externalapi.operations.*;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.logging.LoggedAction;
 import lombok.AccessLevel;
@@ -205,8 +202,11 @@ public class CheckPoint extends BaseInfObject {
 
     @Nullable
     public UserAccount getCurrentRailCar() {
-        List<UserAccount> allRailCars = reservation.getProposals()
+        List<UserAccount> allRailCars = getExternalAPI()
+                .getAccountHistory(reservation, OperationType.PROPOSAL_CREATE)
                 .stream()
+                .map(o -> (ProposalCreateOperation) o)
+                .map(ProposalCreateOperation::getProposal)
                 .map(Proposal::getOperation)
                 .filter(operation -> operation.getOperationType() == OperationType.TRANSFER)
                 .map(operation -> (TransferOperation) operation)
@@ -288,7 +288,7 @@ public class CheckPoint extends BaseInfObject {
         reservation = getExternalAPI().getAccountByName(getUTransnetAccount().getId() + "-reserve");
     }
 
-   /* @Override
+    @Override
     public void update(int seconds) {
         super.update(seconds);
         String lastOperationId = this.lastOperationOnReserve;
@@ -298,7 +298,7 @@ public class CheckPoint extends BaseInfObject {
             getExternalAPI().operationsAfter(reservation, lastOperationId)
                     .forEach(this::processEachOperation);
         }
-    }*/
+    }
 
     @Override
     protected Logger logger() {
