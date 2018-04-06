@@ -125,7 +125,7 @@ project(':simulator') {
 
         compile "com.squareup.okhttp3:okhttp:$okhttpVersion"
 
-        compile 'com.github.utransnet:graphenej:0.5.2.2' // not yet published
+        compile 'com.github.utransnet:graphenej:0.5.3-0' // not yet published
 //        compile files("libs/graphenej-0.4.6.jar")
     }
 

@@ -20,6 +20,12 @@ public class ExternalAPIGrapheneConfig {
 
     @Bean
     @Scope("singleton")
+    MessageHub messageHub() {
+        return new MessageHub();
+    }
+
+    @Bean
+    @Scope("singleton")
     @Autowired
     APIObjectFactory apiObjectFactory(ApplicationContext context) {
         return new APIObjectFactoryGraphene(context);
@@ -45,12 +51,14 @@ public class ExternalAPIGrapheneConfig {
     ExternalAPI externalAPI(
             APIObjectFactory apiObjectFactory,
             DefaultAssets defaultAssets,
-            OperationConverter operationConverter
+            OperationConverter operationConverter,
+            MessageHub messageHub
     ) {
         return new ExternalAPIGraphene(
                 apiObjectFactory,
                 defaultAssets,
-                operationConverter
+                operationConverter,
+                messageHub
         );
     }
 

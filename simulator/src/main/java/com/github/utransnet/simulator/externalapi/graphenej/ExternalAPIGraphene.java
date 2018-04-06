@@ -1,10 +1,8 @@
 package com.github.utransnet.simulator.externalapi.graphenej;
 
+import com.github.utransnet.graphenej.GrapheneObject;
 import com.github.utransnet.graphenej.Transaction;
-import com.github.utransnet.graphenej.api.GetAccountByName;
-import com.github.utransnet.graphenej.api.GetAccountHistory;
-import com.github.utransnet.graphenej.api.GetProposedTransactions;
-import com.github.utransnet.graphenej.api.TransactionBroadcastSequence;
+import com.github.utransnet.graphenej.api.*;
 import com.github.utransnet.graphenej.interfaces.WitnessResponseListener;
 import com.github.utransnet.graphenej.models.AccountProperties;
 import com.github.utransnet.graphenej.models.HistoricalOperation;
@@ -20,13 +18,11 @@ import lombok.SneakyThrows;
 import org.bitcoinj.core.ECKey;
 import org.springframework.util.Assert;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -40,17 +36,24 @@ public class ExternalAPIGraphene extends ExternalAPI {
     private final APIObjectFactory apiObjectFactory;
     private final DefaultAssets defaultAssets;
     private final OperationConverter operationConverter;
+    private final MessageHub messageHub;
     private WebSocketFactory factory;
     private ExecutorService threadPool;
     private com.github.utransnet.graphenej.Asset feeAsset;
     private AssetAmount msgAsset;
 
-    ExternalAPIGraphene(APIObjectFactory apiObjectFactory, DefaultAssets defaultAssets, OperationConverter operationConverter) {
+    ExternalAPIGraphene(
+            APIObjectFactory apiObjectFactory,
+            DefaultAssets defaultAssets,
+            OperationConverter operationConverter,
+            MessageHub messageHub
+    ) {
         this.apiObjectFactory = apiObjectFactory;
         this.defaultAssets = defaultAssets;
         feeAsset = new com.github.utransnet.graphenej.Asset(defaultAssets.getFeeAsset().getId());
         msgAsset = new AssetAmountGraphene(castToGraphene(defaultAssets.getMessageAsset()), 1);
         this.operationConverter = operationConverter;
+        this.messageHub = messageHub;
     }
 
 
@@ -292,22 +295,57 @@ public class ExternalAPIGraphene extends ExternalAPI {
 
     @Override
     public void listenAccountUpdatesByUserId(String listenerId, Set<String> accsToListen, Consumer<AccountUpdateObject> onUpdate) {
-
+        messageHub.addNewListener(listenerId, accountTransactionHistoryObject -> {
+            if (accsToListen.contains(accountTransactionHistoryObject.getAccount())) {
+                GrapheneObject object = getObject(accountTransactionHistoryObject.getOperation_id());
+                //TODO: create AccountUpdateObject
+                onUpdate.accept(null);
+            }
+        });
     }
 
     @Override
     public void removeAccountUpdateListener(String listenerId) {
-
+        messageHub.removeListener(listenerId);
     }
 
     @Override
     public void listenAccountOperationsByUserId(String listenerId, Set<String> accsToListen, Consumer<ExternalObject> onUpdate) {
-
+        messageHub.addNewListener(listenerId, accountTransactionHistoryObject -> {
+            if (accsToListen.contains(accountTransactionHistoryObject.getAccount())) {
+                GrapheneObject object = getObject(accountTransactionHistoryObject.getOperation_id());
+                //TODO: get object caused update
+                /*if (object != null && object.getObjectType() == ObjectType.OPERATION_HISTORY_OBJECT) {
+                    HistoricalOperation operation = (HistoricalOperation) object;
+                }*/
+                onUpdate.accept(null);
+            }
+        });
     }
 
     @Override
     public void removeAccountOperationListener(String listenerId) {
+        messageHub.removeListener(listenerId);
+    }
 
+    @Nullable
+    private GrapheneObject getObject(String id) {
+        List<GrapheneObject> objects = getObjects(Collections.singletonList(id));
+        if (!objects.isEmpty()) {
+            return objects.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    private List<GrapheneObject> getObjects(List<String> ids) {
+        ResponseObject<List<GrapheneObject>> responseObject = new ResponseObject<>();
+        GetObjects listener = new GetObjects(
+                ids,
+                new BlockingResponseListener<>(responseObject)
+        );
+        broadcastTransaction(listener, responseObject);
+        return responseObject.getResult();
     }
 
 }
