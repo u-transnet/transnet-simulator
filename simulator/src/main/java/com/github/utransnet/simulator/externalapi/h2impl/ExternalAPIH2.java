@@ -111,6 +111,7 @@ public class ExternalAPIH2 extends ExternalAPI {
                     break;
             }
 
+            fireAccountOperation(accsToNotify, new ProposalUpdateOperationH2(proposal, accsToNotify));
             fireAccountOperation(accsToNotify, updaterObject);
             fireAccountUpdate(accsToNotify);
         }
