@@ -5,7 +5,9 @@ import com.github.utransnet.graphenej.Transaction;
 import com.github.utransnet.graphenej.api.*;
 import com.github.utransnet.graphenej.interfaces.WitnessResponseListener;
 import com.github.utransnet.graphenej.models.AccountProperties;
+import com.github.utransnet.graphenej.models.AccountTransactionHistoryObject;
 import com.github.utransnet.graphenej.models.HistoricalOperation;
+import com.github.utransnet.graphenej.models.SubscriptionResponse;
 import com.github.utransnet.graphenej.operations.*;
 import com.github.utransnet.graphenej.test.NaiveSSLContext;
 import com.github.utransnet.simulator.externalapi.*;
@@ -295,11 +297,23 @@ public class ExternalAPIGraphene extends ExternalAPI {
 
     @Override
     public void listenAccountUpdatesByUserId(String listenerId, Set<String> accsToListen, Consumer<AccountUpdateObject> onUpdate) {
-        messageHub.addNewListener(listenerId, accountTransactionHistoryObject -> {
-            if (accsToListen.contains(accountTransactionHistoryObject.getAccount())) {
-                GrapheneObject object = getObject(accountTransactionHistoryObject.getOperation_id());
-                //TODO: create AccountUpdateObject
-                onUpdate.accept(null);
+        messageHub.addNewListener(listenerId, new AccountSubscriptionListener() {
+            @Override
+            public List<String> getInterestedAccountNames() {
+                return new ArrayList<>(accsToListen);
+            }
+
+            @Override
+            public void onSubscriptionUpdate(SubscriptionResponse subscriptionResponse) {
+                MessageHub.convertAndConsume(subscriptionResponse, AccountTransactionHistoryObject.class)
+                        .forEach(accountTransactionHistoryObject -> {
+                            // filter accounts, because notifications delivered by chuncks
+                            if (accsToListen.contains(accountTransactionHistoryObject.getAccount())) {
+//                            GrapheneObject object = getObject(accountTransactionHistoryObject.getOperation_id());
+                                //TODO: create AccountUpdateObject
+                                onUpdate.accept(null);
+                            }
+                        });
             }
         });
     }
@@ -311,14 +325,26 @@ public class ExternalAPIGraphene extends ExternalAPI {
 
     @Override
     public void listenAccountOperationsByUserId(String listenerId, Set<String> accsToListen, Consumer<ExternalObject> onUpdate) {
-        messageHub.addNewListener(listenerId, accountTransactionHistoryObject -> {
-            if (accsToListen.contains(accountTransactionHistoryObject.getAccount())) {
-                GrapheneObject object = getObject(accountTransactionHistoryObject.getOperation_id());
-                //TODO: get object caused update
-                /*if (object != null && object.getObjectType() == ObjectType.OPERATION_HISTORY_OBJECT) {
-                    HistoricalOperation operation = (HistoricalOperation) object;
-                }*/
-                onUpdate.accept(null);
+        messageHub.addNewListener(listenerId, new AccountSubscriptionListener() {
+            @Override
+            public List<String> getInterestedAccountNames() {
+                return new ArrayList<>(accsToListen);
+            }
+
+            @Override
+            public void onSubscriptionUpdate(SubscriptionResponse subscriptionResponse) {
+                MessageHub.convertAndConsume(subscriptionResponse, AccountTransactionHistoryObject.class)
+                        .forEach(accountTransactionHistoryObject -> {
+                            // filter accounts, because notifications delivered by chuncks
+                            if (accsToListen.contains(accountTransactionHistoryObject.getAccount())) {
+//                            GrapheneObject object = getObject(accountTransactionHistoryObject.getOperation_id());
+                                //TODO: get object caused update
+                                /*if (object != null && object.getObjectType() == ObjectType.OPERATION_HISTORY_OBJECT) {
+                                    HistoricalOperation operation = (HistoricalOperation) object;
+                                }*/
+                                onUpdate.accept(null);
+                            }
+                        });
             }
         });
     }
