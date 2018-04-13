@@ -9,8 +9,12 @@ import com.github.utransnet.simulator.externalapi.operations.OperationType;
  * Created by Artem on 05.04.2018.
  */
 public class MessageOperationGraphene extends TransferOperationGraphene implements MessageOperation {
-    public MessageOperationGraphene(TransferOperation operation, APIObjectFactory objectFactory) {
-        super(operation, objectFactory);
+    public MessageOperationGraphene(
+            TransferOperation operation,
+            APIObjectFactory objectFactory,
+            PrivateKeysSharedPool privateKeysSharedPool
+    ) {
+        super(operation, objectFactory, privateKeysSharedPool);
     }
 
     @Override

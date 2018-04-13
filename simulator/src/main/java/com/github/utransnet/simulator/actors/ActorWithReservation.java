@@ -8,4 +8,5 @@ import com.github.utransnet.simulator.externalapi.UserAccount;
 public interface ActorWithReservation {
     UserAccount getReservation();
 
+    void setReservationWif(String wif);
 }

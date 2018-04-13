@@ -18,4 +18,14 @@ class AssetH2 implements Asset {
     public String toString() {
         return id;
     }
+
+    @Override
+    public String getSymbol() {
+        return id;
+    }
+
+    @Override
+    public void refresh() {
+
+    }
 }

@@ -4,8 +4,9 @@
       "userInfo": {
         "id": "cp6",
         "name": "cp6",
+        "wif": "5Kk1KfJgWHtTsTQACLj7MtVPwH311uLebXH5CKmuFRYo3anSeVe",
         "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
       "station": false
@@ -14,8 +15,10 @@
       "userInfo": {
         "id": "cp2",
         "name": "cp2",
+        "wif": "5KNUUVP8YVzPRdoejfaVprD8SXYgeusLkfvcx7YtmeBJopNFvYo",
+        "reservationWif": "5JdD5zQ2TAqB7hLgFNfkRGTWTe6HFMA1PnQHdcoMCSr8dwBtrnQ",
         "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
       "station": false
@@ -24,8 +27,10 @@
       "userInfo": {
         "id": "cp3",
         "name": "cp3",
+        "wif": "5JppZgiTwyG8YAo55P2QqBjrqebSvvWDhEM2kK2LMvVPyeT43GM",
+        "reservationWif": "5K4ASovJnLFBUHtFzo3KbqtUzQ9y3GwfkMrPPHFELKHHGZw6nkE",
         "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
       "station": true
@@ -34,18 +39,9 @@
       "userInfo": {
         "id": "cp4",
         "name": "cp4",
+        "wif": "5JGhCjACVxDZdFoPwSuCgaMwesK9mREa3YmN3hcr9MrN3f5Lt3t",
         "balance": [
-          "100 RA"
-        ]
-      },
-      "station": true
-    },
-    {
-      "userInfo": {
-        "id": "cp7",
-        "name": "cp7",
-        "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
       "station": true
@@ -54,8 +50,9 @@
       "userInfo": {
         "id": "cp5",
         "name": "cp5",
+        "wif": "5KEpjustBh8maDux3NCfETSNHn6FYWufJNDyxiZFjFTGLkTfz6V",
         "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
       "station": false
@@ -64,38 +61,44 @@
       "userInfo": {
         "id": "cp1",
         "name": "cp1",
+        "wif": "5JpR9rTWpiNHQ7zwXguLko1bcLyEqP7cwSkGKmX3S6P9HHTrKfN",
+        "reservationWif": "5JaMfhdLe3SEu4nZ7D5znTu6xaLvxH9jkfvU7DNuzMBj7NoAfgE",
         "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
       "station": true
     }
   ],
   "logist": {
-    "id": "logist",
-    "name": "logist",
+    "id": "logist1",
+    "name": "logist1",
+    "wif": "5JL4ZuJnkXXaKMEaaiTwMfxdNpxEBP8iRErjmgMmDsxYzSWTLNW",
     "balance": []
   },
   "routeMapPrice": "2 UTT",
   "clients": [
     {
-      "id": "client",
-      "name": "client",
+      "id": "client1",
+      "name": "client1",
+      "wif": "5JPUt4k4RnC2Ncd5QZQfYBH2D34yyoP84Cf3DvZta9kHqbsx7Yb",
       "balance": [
-        "100 UTT"
+        "100 SYMULATOR.UTT"
       ]
     }
   ],
   "railCars": [
     {
       "userInfo": {
-        "id": "car",
-        "name": "car",
+        "id": "car1",
+        "name": "car1",
+        "wif": "5KEvakCnjtDMvpeML7m5yFNUPCji2AxXjRs45rzh9xEHiXtkX4c",
+        "reservationWif": "5KJLYX5XuDtWpWAZ2pNUqkuYR8UrGKLXDn4z28nmb3VY1pJk7Ta",
         "balance": [
-          "100 RA"
+          "100 SYMULATOR.RA"
         ]
       },
-      "startPointId": "cp1"
+      "startPointName": "cp1"
     }
   ]
 }

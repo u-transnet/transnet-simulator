@@ -3,9 +3,7 @@ package com.github.utransnet.simulator.services;
 import com.github.utransnet.simulator.actors.*;
 import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.factory.ActorFactory;
-import com.github.utransnet.simulator.externalapi.APIObjectFactory;
-import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.logging.PositionMonitoring;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -15,7 +13,10 @@ import com.github.utransnet.simulator.route.SerializedUserInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
+import javax.annotation.PostConstruct;
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -32,10 +33,13 @@ public class SupervisorImpl implements Supervisor {
     private final ExternalAPI externalAPI;
     private final APIObjectFactory apiObjectFactory;
     private final PositionMonitoring positionMonitoring;
+    private final DefaultAssets defaultAssets;
 
-    private final String supervisorId = "supervisor";
+    private final String supervisorId = "simulator-supervisor";
     private UserAccount supervisorAccount;
 
+    private AssetAmount startingMsgAssetAmount;
+    private AssetAmount startingFeeAssetAmount;
 
     private boolean started = false;
     private Set<Actor> actors;
@@ -46,14 +50,23 @@ public class SupervisorImpl implements Supervisor {
             ActorFactory actorFactory,
             ExternalAPI externalAPI,
             APIObjectFactory apiObjectFactory,
-            PositionMonitoring positionMonitoring) {
+            PositionMonitoring positionMonitoring,
+            DefaultAssets defaultAssets
+    ) {
         this.routeMapInputQueue = routeMapInputQueue;
         this.clientInputQueue = clientInputQueue;
         this.actorFactory = actorFactory;
         this.externalAPI = externalAPI;
         this.apiObjectFactory = apiObjectFactory;
         this.positionMonitoring = positionMonitoring;
+        this.defaultAssets = defaultAssets;
         actors = new HashSet<>(128);
+    }
+
+    @PostConstruct
+    private void postConstruct() {
+        startingFeeAssetAmount = apiObjectFactory.getAssetAmount(defaultAssets.getFeeAsset(), 10000000);
+        startingMsgAssetAmount = apiObjectFactory.getAssetAmount(defaultAssets.getMessageAsset(), 100);
     }
 
     protected Scenario loadScenario(ScenarioContainer scenarioContainer) {
@@ -62,9 +75,10 @@ public class SupervisorImpl implements Supervisor {
         scenario.setRouteMapPrice(scenarioContainer.routeMapPrice);
 
         SerializedUserInfo logistInfo = scenarioContainer.logist;
+        UserAccount logistAccount = initUserAccount(logistInfo);
         Logist logist = actorFactory.createLogistBuilder()
-                .id(logistInfo.getId())
-                .uTransnetAccount(initUserAccount(logistInfo))
+                .id(logistAccount.getId())
+                .uTransnetAccount(logistAccount)
                 .build();
 
         logist.setRouteMapPrice(scenarioContainer.routeMapPrice.getAmount());
@@ -72,9 +86,10 @@ public class SupervisorImpl implements Supervisor {
         actors.add(logist);
 
         scenarioContainer.clients.forEach(userInfo -> {
+            UserAccount clientAccount = initUserAccount(userInfo);
             Client client = actorFactory.createClientBuilder()
-                    .id(userInfo.getId())
-                    .uTransnetAccount(initUserAccount(userInfo))
+                    .id(clientAccount.getId())
+                    .uTransnetAccount(clientAccount)
                     .build();
             client.setLogistName(scenario.getLogist().getId());
             client.setRouteMapPrice(scenario.getRouteMapPrice());
@@ -86,15 +101,18 @@ public class SupervisorImpl implements Supervisor {
             SerializedUserInfo userInfo = infrastructureInfo.getUserInfo();
             UserAccount uTransnetAccount = initUserAccount(userInfo);
             CheckPoint checkPoint = actorFactory.createCheckPointBuilder()
-                    .id(userInfo.getId())
+                    .id(uTransnetAccount.getId())
                     .uTransnetAccount(uTransnetAccount)
                     .build();
             checkPoint.setLogist(logist.getUTransnetAccount());
+            if (userInfo.getReservationWif() != null) {
+                checkPoint.setReservationWif(userInfo.getReservationWif());
+            }
 
             if (infrastructureInfo.isStation()) {
                 Station station = actorFactory.createStationBuilder()
-                        .id(userInfo.getId())
-                        .uTransnetAccount(externalAPI.getAccountById(userInfo.getId()))
+                        .id(uTransnetAccount.getId())
+                        .uTransnetAccount(externalAPI.getAccountByName(userInfo.getName()))
                         .build();
                 station.setCheckPoint(checkPoint);
                 actors.add(station);
@@ -105,15 +123,31 @@ public class SupervisorImpl implements Supervisor {
         });
 
         scenarioContainer.railCars.forEach(serializedRailCarInfo -> {
+            SerializedUserInfo userInfo = serializedRailCarInfo.getUserInfo();
+            UserAccount uTransnetAccount = initUserAccount(userInfo);
             RailCar railCar = actorFactory.createRailCarBuilder()
-                    .id(serializedRailCarInfo.getUserInfo().getId())
-                    .uTransnetAccount(initUserAccount(serializedRailCarInfo.getUserInfo()))
+                    .id(uTransnetAccount.getId())
+                    .uTransnetAccount(uTransnetAccount)
                     .build();
+
+            if (userInfo.getReservationWif() != null) {
+                railCar.setReservationWif(userInfo.getReservationWif());
+            }
+
             scenario.addActor(railCar);
             actors.add(railCar);
 
-            UserAccount station = externalAPI.getAccountById(serializedRailCarInfo.getStartPointId());
-            UserAccount reservation = externalAPI.getAccountByName(station.getId() + "-reserve");
+            Optional<CheckPoint> startingActor = scenario.getInfrastructure()
+                    .stream()
+                    .filter(checkPoint -> Objects.equals(
+                            checkPoint.getUTransnetAccount().getName(),
+                            serializedRailCarInfo.getStartPointName()
+                    )).findFirst();
+            if (!startingActor.isPresent()) {
+                throw new RuntimeException("Not found starting point actor: " + serializedRailCarInfo.getStartPointName());
+            }
+            UserAccount station = startingActor.get().getUTransnetAccount();
+            UserAccount reservation = startingActor.get().getReservation();
             // pay to checkpoint for new RailCar
             String stubRouteMapId = "free-" + railCar.getId();
             // inform about RouteMap
@@ -122,12 +156,12 @@ public class SupervisorImpl implements Supervisor {
                     supervisorAccount,
                     station,
                     supervisorAccount,
-                    apiObjectFactory.getAssetAmount("UTT", 10),
+                    apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10),
                     stubRouteMapId
             );
             supervisorAccount.sendAsset(
                     station,
-                    apiObjectFactory.getAssetAmount("UTT", 2),
+                    apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 2),
                     stubRouteMapId
             );
             // ask entrance
@@ -135,7 +169,7 @@ public class SupervisorImpl implements Supervisor {
                     reservation,
                     railCar.getUTransnetAccount(),
                     railCar.getUTransnetAccount(),
-                    apiObjectFactory.getAssetAmount("RA", 10),
+                    apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10),
                     stubRouteMapId
             );
 
@@ -156,8 +190,11 @@ public class SupervisorImpl implements Supervisor {
     }
 
     protected UserAccount initUserAccount(SerializedUserInfo userInfo) {
-        UserAccount account = externalAPI.getAccountById(userInfo.getId());
+        UserAccount account = externalAPI.getAccountByName(userInfo.getName());
+        account.setKey(userInfo.getWif());
         userInfo.getBalance().forEach(assetAmount -> supervisorAccount.sendAsset(account, assetAmount, "init"));
+        supervisorAccount.sendAsset(account, startingMsgAssetAmount, "init");
+        supervisorAccount.sendAsset(account, startingFeeAssetAmount, "init");
         return account;
     }
 
@@ -183,7 +220,8 @@ public class SupervisorImpl implements Supervisor {
     @Override
     public void init(ScenarioContainer scenarioContainer) throws SimulationStartedException {
         if (!started) {
-            supervisorAccount = externalAPI.getAccountById(supervisorId);
+            supervisorAccount = externalAPI.getAccountByName(supervisorId);
+            supervisorAccount.setKey("5J5kmCnAxYnTpYcScMnLHcFoT79iCsHLwbNuBADP5Wu1FqzEx3J");
             Scenario scenario = loadScenario(scenarioContainer);
             positionMonitoring.init(scenario);
 

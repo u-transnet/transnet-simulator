@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MessageHub {
 
-    protected String NODE_URL = System.getenv("wss://eu.openledger.info/ws");
+    protected String NODE_URL = System.getenv("NODE_WS");
     protected SSLContext context;
     protected WebSocket mWebSocket;
     private NodeErrorListener mErrorListener = error -> log.error(error.message);
@@ -74,10 +74,10 @@ public class MessageHub {
 
             @Override
             public void onSubscriptionUpdate(SubscriptionResponse response) {
-                log.debug("Received ACCOUNT_STATISTICS_OBJECT");
+                log.trace("Received ACCOUNT_STATISTICS_OBJECT");
                 convertAndConsume(response, DynamicGlobalProperties.class).forEach(o -> {
-                    log.debug("Head block number: " + o.head_block_number);
-                    log.debug("Witness: " + o.current_witness);
+                    log.trace("Head block number: " + o.head_block_number);
+                    log.trace("Witness: " + o.current_witness);
                 });
 
             }

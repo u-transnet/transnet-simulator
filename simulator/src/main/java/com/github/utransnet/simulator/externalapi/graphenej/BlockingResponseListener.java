@@ -21,7 +21,9 @@ public class BlockingResponseListener<T> implements WitnessResponseListener {
     @Override
     public void onSuccess(WitnessResponse response) {
         log.debug("onSuccess");
-        log.debug(response.toString());
+        if (response.result != null) {
+            log.debug(response.result.toString());
+        }
         responseObject.setResult((T) response.result);
         synchronized (responseObject) {
             responseObject.notifyAll();

@@ -1,16 +1,20 @@
 package com.github.utransnet.simulator.externalapi.graphenej;
 
+import com.github.utransnet.graphenej.Address;
 import com.github.utransnet.graphenej.GrapheneObject;
 import com.github.utransnet.graphenej.Transaction;
+import com.github.utransnet.graphenej.Util;
 import com.github.utransnet.graphenej.api.*;
 import com.github.utransnet.graphenej.interfaces.WitnessResponseListener;
 import com.github.utransnet.graphenej.models.AccountProperties;
 import com.github.utransnet.graphenej.models.AccountTransactionHistoryObject;
 import com.github.utransnet.graphenej.models.HistoricalOperation;
 import com.github.utransnet.graphenej.models.SubscriptionResponse;
+import com.github.utransnet.graphenej.objects.Memo;
 import com.github.utransnet.graphenej.operations.*;
 import com.github.utransnet.graphenej.test.NaiveSSLContext;
 import com.github.utransnet.simulator.externalapi.*;
+import com.github.utransnet.simulator.externalapi.exceptions.NotFoundException;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
 import com.neovisionaries.ws.client.WebSocket;
@@ -18,11 +22,13 @@ import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketListener;
 import lombok.SneakyThrows;
 import org.bitcoinj.core.ECKey;
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLContext;
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -35,27 +41,28 @@ import java.util.stream.Collectors;
  */
 public class ExternalAPIGraphene extends ExternalAPI {
 
-    private final APIObjectFactory apiObjectFactory;
     private final DefaultAssets defaultAssets;
     private final OperationConverter operationConverter;
     private final MessageHub messageHub;
+    private final ApplicationContext context;
+    private final APIObjectFactory apiObjectFactory;
     private WebSocketFactory factory;
     private ExecutorService threadPool;
     private com.github.utransnet.graphenej.Asset feeAsset;
     private AssetAmount msgAsset;
 
     ExternalAPIGraphene(
+            ApplicationContext context,
             APIObjectFactory apiObjectFactory,
             DefaultAssets defaultAssets,
             OperationConverter operationConverter,
             MessageHub messageHub
     ) {
-        this.apiObjectFactory = apiObjectFactory;
         this.defaultAssets = defaultAssets;
-        feeAsset = new com.github.utransnet.graphenej.Asset(defaultAssets.getFeeAsset().getId());
-        msgAsset = new AssetAmountGraphene(castToGraphene(defaultAssets.getMessageAsset()), 1);
         this.operationConverter = operationConverter;
         this.messageHub = messageHub;
+        this.context = context;
+        this.apiObjectFactory = apiObjectFactory;
     }
 
 
@@ -71,7 +78,12 @@ public class ExternalAPIGraphene extends ExternalAPI {
 
         WitnessResponseListener responseListener = new BlockingResponseListener<>(responseObject);
 
-        Transaction transaction = new Transaction(feePayerKey, null, operationList);
+        Transaction transaction = new Transaction(
+                Util.hexToBytes("773a625737a4686a40d832569f1691730bba2c1adc8009ee6b341b71fff35c18"),
+                feePayerKey,
+                null,
+                operationList
+        );
         TransactionBroadcastSequence listener = new TransactionBroadcastSequence(transaction, feeAsset, responseListener);
         broadcastTransaction(listener, responseObject);
     }
@@ -79,7 +91,8 @@ public class ExternalAPIGraphene extends ExternalAPI {
     @SneakyThrows
     private void broadcastTransaction(WebSocketListener listener, final Object lock) {
         //TODO
-        WebSocket mWebSocket = factory.createSocket("wss://eu.openledger.info/ws");
+//        WebSocket mWebSocket = factory.createSocket("wss://eu.openledger.info/ws");
+        WebSocket mWebSocket = factory.createSocket(System.getenv("NODE_WS"));
 
 
         mWebSocket.addListener(listener);
@@ -111,19 +124,41 @@ public class ExternalAPIGraphene extends ExternalAPI {
         factory.setSSLContext(context);
 
         threadPool = Executors.newCachedThreadPool();
+
+
+        feeAsset = getAssetSymbol(defaultAssets.getFeeAsset());
+        msgAsset = new AssetAmountGraphene(castToGraphene(apiObjectFactory.getAsset(defaultAssets.getMessageAsset())), 1);
     }
 
     @Override
     public void sendProposal(UserAccount from, UserAccount to, UserAccount feePayer, AssetAmount assetAmount, String memo) {
-        com.github.utransnet.graphenej.UserAccount fromRaw = this.<UserAccountGraphene>castToGraphene(from).getRaw();
-        com.github.utransnet.graphenej.UserAccount toRaw = this.<UserAccountGraphene>castToGraphene(to).getRaw();
+        UserAccountGraphene fromGrapheneAccount = castToGraphene(from);
+        UserAccountGraphene toGrapheneAccount = castToGraphene(to);
+        com.github.utransnet.graphenej.UserAccount fromRaw = fromGrapheneAccount.getRaw();
+        com.github.utransnet.graphenej.UserAccount toRaw = toGrapheneAccount.getRaw();
         com.github.utransnet.graphenej.AssetAmount assetRaw =
                 this.<AssetAmountGraphene>castToGraphene(assetAmount).getRaw();
+
+        // Creating memo
+        BigInteger nonce = BigInteger.ONE;
+        byte[] encryptedMessage = Memo.encryptMessage(
+                fromGrapheneAccount.getKey(),
+                new Address(ECKey.fromPublicOnly(toGrapheneAccount.getKey().getPubKey())),
+                nonce,
+                memo
+        );
+        Memo memoObj = new Memo(
+                new Address(ECKey.fromPublicOnly(fromGrapheneAccount.getKey().getPubKey())),
+                new Address(ECKey.fromPublicOnly(toGrapheneAccount.getKey().getPubKey())),
+                nonce,
+                encryptedMessage
+        );
 
         TransferOperation transferOperation = new TransferOperationBuilder()
                 .setTransferAmount(assetRaw)
                 .setSource(fromRaw)
                 .setDestination(toRaw)
+                .setMemo(memoObj)
                 .build();
 
         UserAccountGraphene feePayerGrapheneAccount = castToGraphene(feePayer);
@@ -153,15 +188,33 @@ public class ExternalAPIGraphene extends ExternalAPI {
     public void sendAsset(UserAccount from, UserAccount to, AssetAmount assetAmount, String memo) {
         threadPool.execute(() -> {
             UserAccountGraphene fromGrapheneAccount = castToGraphene(from);
+            UserAccountGraphene toGrapheneAccount = castToGraphene(to);
             com.github.utransnet.graphenej.UserAccount fromRaw = fromGrapheneAccount.getRaw();
-            com.github.utransnet.graphenej.UserAccount toRaw = ((UserAccountGraphene) castToGraphene(to)).getRaw();
+            com.github.utransnet.graphenej.UserAccount toRaw = toGrapheneAccount.getRaw();
             com.github.utransnet.graphenej.AssetAmount assetRaw =
                     ((AssetAmountGraphene) castToGraphene(assetAmount)).getRaw();
+
+
+            // Creating memo
+            BigInteger nonce = BigInteger.ONE;
+            byte[] encryptedMessage = Memo.encryptMessage(
+                    fromGrapheneAccount.getKey(),
+                    new Address(ECKey.fromPublicOnly(toGrapheneAccount.getKey().getPubKey())),
+                    nonce,
+                    memo
+            );
+            Memo memoObj = new Memo(
+                    new Address(ECKey.fromPublicOnly(fromGrapheneAccount.getKey().getPubKey())),
+                    new Address(ECKey.fromPublicOnly(toGrapheneAccount.getKey().getPubKey())),
+                    nonce,
+                    encryptedMessage
+            );
 
             TransferOperation transferOperation = new TransferOperationBuilder()
                     .setTransferAmount(assetRaw)
                     .setSource(fromRaw)
                     .setDestination(toRaw)
+                    .setMemo(memoObj)
                     .build();
 
             sendTransaction(transferOperation, fromGrapheneAccount.getKey());
@@ -200,7 +253,9 @@ public class ExternalAPIGraphene extends ExternalAPI {
                 new BlockingResponseListener<>(responseObject)
         );
         broadcastTransaction(listener, responseObject);
-
+        if (responseObject.getResult() == null) {
+            return new ArrayList<>(0);
+        }
         return responseObject.getResult()
                 .stream()
                 .map(proposal -> new ProposalGraphene(proposal, operationConverter))
@@ -222,8 +277,10 @@ public class ExternalAPIGraphene extends ExternalAPI {
         );
 
         broadcastTransaction(getAccountByName, responseObject);
-
-        UserAccountGraphene userAccount = castToGraphene(apiObjectFactory.userAccount(responseObject.getResult().id));
+        if (responseObject.getResult() == null) {
+            throw new NotFoundException("Account with name '" + name + "' not found");
+        }
+        UserAccountGraphene userAccount = castToGraphene(getAccountById(responseObject.getResult().id));
         userAccount.setName(responseObject.getResult().name);
 
         return userAccount;
@@ -242,7 +299,7 @@ public class ExternalAPIGraphene extends ExternalAPI {
                 GetAccountHistory.OLDEST_TRANSACTION_ID,
                 1
         );
-        if (accountHistory.size() > 0) {
+        if (accountHistory.size() > 0 && accountHistory.get(0) != null) {
             return Optional.of(accountHistory.get(0));
         } else {
             return Optional.empty();
@@ -278,18 +335,21 @@ public class ExternalAPIGraphene extends ExternalAPI {
         broadcastTransaction(getAccountHistory, responseObject);
 
         ArrayList<BaseOperationGraphene> history = new ArrayList<>(10);
-        responseObject.getResult().forEach(historicalOperation -> {
-            BaseOperationGraphene baseOperationGraphene = operationConverter.fromGrapheneOp(
-                    historicalOperation.getOperation()
-            );
-            if (baseOperationGraphene.getOperationType() == OperationType.PROPOSAL_CREATE) {
-                if (historicalOperation.result.length == 2) {
-                    String proposalId = (String) historicalOperation.result[1];
-                    ((ProposalCreateOperationGraphene) baseOperationGraphene).getProposal().setId(proposalId);
+        if (responseObject.getResult() != null) {
+            responseObject.getResult().forEach(historicalOperation -> {
+                BaseOperationGraphene baseOperationGraphene = operationConverter.fromGrapheneOp(
+                        historicalOperation.getOperation()
+                );
+                if (baseOperationGraphene != null &&
+                        baseOperationGraphene.getOperationType() == OperationType.PROPOSAL_CREATE) {
+                    if (historicalOperation.result.length == 2) {
+                        String proposalId = (String) historicalOperation.result[1];
+                        ((ProposalCreateOperationGraphene) baseOperationGraphene).getProposal().setId(proposalId);
+                    }
                 }
-            }
-            history.add(baseOperationGraphene);
-        });
+                history.add(baseOperationGraphene);
+            });
+        }
 
         return history;
     }
@@ -355,7 +415,7 @@ public class ExternalAPIGraphene extends ExternalAPI {
     }
 
     @Nullable
-    private GrapheneObject getObject(String id) {
+    GrapheneObject getObject(String id) {
         List<GrapheneObject> objects = getObjects(Collections.singletonList(id));
         if (!objects.isEmpty()) {
             return objects.get(0);
@@ -364,14 +424,44 @@ public class ExternalAPIGraphene extends ExternalAPI {
         }
     }
 
-    private List<GrapheneObject> getObjects(List<String> ids) {
+    List<GrapheneObject> getObjects(List<String> ids) {
         ResponseObject<List<GrapheneObject>> responseObject = new ResponseObject<>();
         GetObjects listener = new GetObjects(
                 ids,
                 new BlockingResponseListener<>(responseObject)
         );
         broadcastTransaction(listener, responseObject);
-        return responseObject.getResult();
+
+        if (responseObject.getResult() == null) {
+            return new ArrayList<>(0);
+        } else {
+            return responseObject.getResult();
+        }
+    }
+
+    List<com.github.utransnet.graphenej.Asset> getAssetsSymbols(List<String> assets) {
+        ResponseObject<List<com.github.utransnet.graphenej.Asset>> responseObject = new ResponseObject<>();
+        LookupAssetSymbols listener = new LookupAssetSymbols(
+                new ArrayList<>(assets),
+                new BlockingResponseListener<>(responseObject)
+        );
+        broadcastTransaction(listener, responseObject);
+
+        if (responseObject.getResult() == null) {
+            return new ArrayList<>(0);
+        } else {
+            return responseObject.getResult();
+        }
+    }
+
+    @Nullable
+    com.github.utransnet.graphenej.Asset getAssetSymbol(String assetId) {
+        List<com.github.utransnet.graphenej.Asset> objects = getAssetsSymbols(Collections.singletonList(assetId));
+        if (!objects.isEmpty()) {
+            return objects.get(0);
+        } else {
+            return null;
+        }
     }
 
 }

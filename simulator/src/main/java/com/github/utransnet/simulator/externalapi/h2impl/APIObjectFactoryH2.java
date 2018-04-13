@@ -1,7 +1,10 @@
 package com.github.utransnet.simulator.externalapi.h2impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.utransnet.simulator.externalapi.*;
+import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.Asset;
+import com.github.utransnet.simulator.externalapi.AssetAmount;
+import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import lombok.SneakyThrows;
 import org.springframework.context.ApplicationContext;
@@ -21,8 +24,8 @@ public class APIObjectFactoryH2 implements APIObjectFactory {
     }
 
     @Override
-    public Asset getAsset(String id) {
-        return new AssetH2(id);
+    public Asset getAsset(String idOrSymbol) {
+        return new AssetH2(idOrSymbol);
     }
 
     @Override

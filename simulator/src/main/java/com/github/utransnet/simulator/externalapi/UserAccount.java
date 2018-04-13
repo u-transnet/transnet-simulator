@@ -3,6 +3,7 @@ package com.github.utransnet.simulator.externalapi;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.stream.Collectors;
 public abstract class UserAccount implements ExternalObject {
 
     private final ExternalAPI externalAPI;
+
+    @Setter
+    private String key;
 
     protected UserAccount(ExternalAPI externalAPI) {
         this.externalAPI = externalAPI;

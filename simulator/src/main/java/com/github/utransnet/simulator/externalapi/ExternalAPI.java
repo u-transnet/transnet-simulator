@@ -8,6 +8,7 @@ import com.github.utransnet.simulator.logging.TransactionPointCut;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -114,7 +115,7 @@ public abstract class ExternalAPI {
             Consumer<ExternalObject> onUpdate) {
         listenAccountOperationsByUserId(
                 listenerId,
-                accsToListen.stream().map(UserAccount::getId).collect(toSet()),
+                accsToListen.stream().filter(Objects::nonNull).map(UserAccount::getId).collect(toSet()),
                 onUpdate
         );
     }

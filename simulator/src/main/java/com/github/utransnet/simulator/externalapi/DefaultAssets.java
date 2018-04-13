@@ -5,25 +5,19 @@ package com.github.utransnet.simulator.externalapi;
  */
 public class DefaultAssets {
 
-    private final APIObjectFactory apiObjectFactory;
-
-    public DefaultAssets(APIObjectFactory apiObjectFactory) {
-        this.apiObjectFactory = apiObjectFactory;
+    public String getMainAsset() {
+        return "SYMULATOR.UTT";
     }
 
-    public Asset getMainAsset() {
-        return apiObjectFactory.getAsset("UTT");
+    public String getFeeAsset() {
+        return "UTT";
     }
 
-    public Asset getFeeAsset() {
-        return apiObjectFactory.getAsset("UTT");
+    public String getResourceAsset() {
+        return "SYMULATOR.RA";
     }
 
-    public Asset getResourceAsset() {
-        return apiObjectFactory.getAsset("RA");
-    }
-
-    public Asset getMessageAsset() {
-        return apiObjectFactory.getAsset("MSG");
+    public String getMessageAsset() {
+        return "SYMULATOR.MSG";
     }
 }

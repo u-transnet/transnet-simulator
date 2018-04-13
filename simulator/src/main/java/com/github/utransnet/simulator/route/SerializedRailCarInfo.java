@@ -12,5 +12,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SerializedRailCarInfo {
     SerializedUserInfo userInfo;
-    String startPointId;
+    String startPointName;
 }

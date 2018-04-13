@@ -19,8 +19,15 @@ public class APIObjectFactoryGraphene implements APIObjectFactory {
     }
 
     @Override
-    public Asset getAsset(String id) {
-        return new AssetGraphene(id);
+    public Asset getAsset(String idOrSymbol) {
+        Asset asset = context.getBean(Asset.class);
+        if (asset instanceof AssetGraphene) {
+            AssetGraphene assetGraphene = (AssetGraphene) asset;
+            assetGraphene.setId(idOrSymbol);
+            return assetGraphene;
+        } else {
+            throw new IllegalArgumentException("Only Graphene implementation can be used with this realization");
+        }
     }
 
     @Override

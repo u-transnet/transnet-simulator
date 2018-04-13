@@ -3,8 +3,6 @@ package com.github.utransnet.simulator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.UserAccount;
-import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
@@ -25,8 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.List;
 
 /**
  * Created by Artem on 01.02.2018.
@@ -63,10 +59,6 @@ public class Main {
         this.supervisor = supervisor;
         this.routeMapInputQueue = routeMapInputQueue;
         this.routeMapFactory = routeMapFactory;
-
-        UserAccount userAccount = objectFactory.userAccount("1.2.638651");
-        List<? extends BaseOperation> accountHistory = externalAPI.getAccountHistory(userAccount);
-        log.info(accountHistory.toString());
     }
 
 

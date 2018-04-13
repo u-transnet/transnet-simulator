@@ -5,10 +5,7 @@ import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.ActorTaskContext;
 import com.github.utransnet.simulator.actors.task.OperationEvent;
 import com.github.utransnet.simulator.actors.task.OperationListener;
-import com.github.utransnet.simulator.externalapi.APIObjectFactory;
-import com.github.utransnet.simulator.externalapi.AssetAmount;
-import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
@@ -36,6 +33,7 @@ public class Station extends BaseInfObject {
     private final RouteMapFactory routeMapFactory;
     private final APIObjectFactory apiObjectFactory;
     private final ActionLogger actionLogger;
+    private final DefaultAssets defaultAssets;
 
     private AssetAmount stationFee;
     private AssetAmount railCarFee;
@@ -47,17 +45,20 @@ public class Station extends BaseInfObject {
             ExternalAPI externalAPI,
             RouteMapFactory routeMapFactory,
             APIObjectFactory apiObjectFactory,
-            ActionLogger actionLogger) {
+            ActionLogger actionLogger,
+            DefaultAssets defaultAssets
+    ) {
         super(externalAPI);
         this.routeMapFactory = routeMapFactory;
         this.apiObjectFactory = apiObjectFactory;
         this.actionLogger = actionLogger;
+        this.defaultAssets = defaultAssets;
     }
 
     @PostConstruct
     private void init() {
-        stationFee = apiObjectFactory.getAssetAmount("UTT", 10);
-        railCarFee = apiObjectFactory.getAssetAmount("RA", 10);
+        stationFee = apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10);
+        railCarFee = apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10);
         addOperationListener(new OperationListener(
                 "wait-order",
                 OperationType.MESSAGE,

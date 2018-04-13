@@ -2,6 +2,7 @@ package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.actors.*;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.DefaultAssets;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.queue.InputQueue;
@@ -87,8 +88,10 @@ public class ActorConfig {
             ExternalAPI externalAPI,
             RouteMapFactory routeMapFactory,
             APIObjectFactory objectFactory,
-            ActionLogger actionLogger) {
-        return new Station(externalAPI, routeMapFactory, objectFactory, actionLogger);
+            ActionLogger actionLogger,
+            DefaultAssets defaultAssets
+    ) {
+        return new Station(externalAPI, routeMapFactory, objectFactory, actionLogger, defaultAssets);
     }
 
     @Bean
@@ -98,15 +101,21 @@ public class ActorConfig {
             ExternalAPI externalAPI,
             RouteMapFactory routeMapFactory,
             APIObjectFactory objectFactory,
-            ActionLogger actionLogger
+            ActionLogger actionLogger,
+            DefaultAssets defaultAssets
     ) {
-        return new RailCar(externalAPI, routeMapFactory, objectFactory, actionLogger);
+        return new RailCar(externalAPI, routeMapFactory, objectFactory, actionLogger, defaultAssets);
     }
 
     @Bean
     @Scope("prototype")
     @Autowired
-    CheckPoint checkPoint(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger) {
-        return new CheckPoint(externalAPI, objectFactory, actionLogger);
+    CheckPoint checkPoint(
+            ExternalAPI externalAPI,
+            APIObjectFactory objectFactory,
+            ActionLogger actionLogger,
+            DefaultAssets defaultAssets
+    ) {
+        return new CheckPoint(externalAPI, objectFactory, actionLogger, defaultAssets);
     }
 }

@@ -21,12 +21,18 @@ public class UserAccountGraphene extends UserAccount implements GrapheneWrapper<
     @Setter(AccessLevel.PACKAGE)
     private String name = null;
 
-    protected UserAccountGraphene(ExternalAPI externalAPI) {
+    private final PrivateKeysSharedPool privateKeysSharedPool;
+
+    protected UserAccountGraphene(ExternalAPI externalAPI, PrivateKeysSharedPool privateKeysSharedPool) {
         super(externalAPI);
+        this.privateKeysSharedPool = privateKeysSharedPool;
     }
 
-    void setKey(String wif) {
-        key = DumpedPrivateKey.fromBase58(null, wif).getKey();
+    @Override
+    public void setKey(String wif) {
+        super.setKey(wif);
+        this.key = DumpedPrivateKey.fromBase58(null, wif).getKey();
+        privateKeysSharedPool.put(getId(), key);
     }
 
 

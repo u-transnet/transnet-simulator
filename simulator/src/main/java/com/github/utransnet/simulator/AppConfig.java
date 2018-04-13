@@ -7,6 +7,7 @@ import com.github.utransnet.simulator.actors.factory.ActorConfig;
 import com.github.utransnet.simulator.actors.factory.ActorFactory;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
 import com.github.utransnet.simulator.externalapi.AssetAmount;
+import com.github.utransnet.simulator.externalapi.DefaultAssets;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.graphenej.ExternalAPIGrapheneConfig;
 import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
@@ -58,10 +59,16 @@ public class AppConfig {
     @Bean
     @Scope("singleton")
     @Autowired
-    PositionMonitoring positionMonitoring(ExternalAPI externalAPI) {
-        return new PositionMonitoring(externalAPI);
+    PositionMonitoring positionMonitoring(ExternalAPI externalAPI, DefaultAssets defaultAssets) {
+        return new PositionMonitoring(externalAPI, defaultAssets);
     }
 
+
+    @Bean
+    @Scope("singleton")
+    DefaultAssets defaultAssets() {
+        return new DefaultAssets();
+    }
 
 
     @Bean
@@ -73,7 +80,8 @@ public class AppConfig {
             ActorFactory actorFactory,
             ExternalAPI externalAPI,
             APIObjectFactory apiObjectFactory,
-            PositionMonitoring positionMonitoring
+            PositionMonitoring positionMonitoring,
+            DefaultAssets defaultAssets
     ) {
         return new SupervisorImpl(
                 routeMapInputQueue,
@@ -81,7 +89,8 @@ public class AppConfig {
                 actorFactory,
                 externalAPI,
                 apiObjectFactory,
-                positionMonitoring
+                positionMonitoring,
+                defaultAssets
         );
     }
 

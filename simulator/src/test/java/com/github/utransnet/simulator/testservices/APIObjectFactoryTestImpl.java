@@ -14,8 +14,8 @@ public class APIObjectFactoryTestImpl implements APIObjectFactory {
     }
 
     @Override
-    public Asset getAsset(String id) {
-        return new Asset4Test(id);
+    public Asset getAsset(String idOrSymbol) {
+        return new Asset4Test(idOrSymbol);
     }
 
     @Override

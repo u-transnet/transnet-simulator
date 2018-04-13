@@ -5,12 +5,12 @@ package com.github.utransnet.simulator.externalapi;
  */
 public interface APIObjectFactory {
 
-    Asset getAsset(String id);
+    Asset getAsset(String idOrSymbol);
 
     AssetAmount getAssetAmount(Asset asset, long amount);
 
-    default AssetAmount getAssetAmount(String id, long amount) {
-        return getAssetAmount(getAsset(id), amount);
+    default AssetAmount getAssetAmount(String idOrSymbol, long amount) {
+        return getAssetAmount(getAsset(idOrSymbol), amount);
     }
 
     UserAccount userAccount(String id);

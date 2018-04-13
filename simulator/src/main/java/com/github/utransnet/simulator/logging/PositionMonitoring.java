@@ -3,6 +3,7 @@ package com.github.utransnet.simulator.logging;
 import com.github.utransnet.simulator.Utils;
 import com.github.utransnet.simulator.actors.CheckPoint;
 import com.github.utransnet.simulator.actors.RailCar;
+import com.github.utransnet.simulator.externalapi.DefaultAssets;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
@@ -20,9 +21,11 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 @Slf4j
 public class PositionMonitoring {
     private final ExternalAPI externalAPI;
+    private final DefaultAssets defaultAssets;
 
-    public PositionMonitoring(ExternalAPI externalAPI) {
+    public PositionMonitoring(ExternalAPI externalAPI, DefaultAssets defaultAssets) {
         this.externalAPI = externalAPI;
+        this.defaultAssets = defaultAssets;
     }
 
     public void init(Scenario scenario) {
@@ -94,7 +97,8 @@ public class PositionMonitoring {
                             .filter(proposal -> {
                                 BaseOperation operation = proposal.getOperation();
                                 if (operation.getOperationType() == OperationType.TRANSFER) {
-                                    if (((TransferOperation) operation).getAsset().getId().equals("RA")) {
+                                    if (((TransferOperation) operation).getAsset()
+                                            .getId().equals(defaultAssets.getResourceAsset())) {
                                         return true;
                                     }
                                 }

@@ -33,6 +33,7 @@ public class RailCar extends BaseInfObject implements ActorWithReservation {
     private final RouteMapFactory routeMapFactory;
     private final APIObjectFactory apiObjectFactory;
     private final ActionLogger actionLogger;
+    private final DefaultAssets defaultAssets;
     private final String delayedStopNameWaitClientPayment = "client-payment";
     private final String namedelayedStopBeforeCheckPoint = "stop-before-check-point";
 
@@ -53,11 +54,18 @@ public class RailCar extends BaseInfObject implements ActorWithReservation {
     @Getter(AccessLevel.PROTECTED)
     private boolean isDoorsClosed = true;
 
-    public RailCar(ExternalAPI externalAPI, RouteMapFactory routeMapFactory, APIObjectFactory apiObjectFactory, ActionLogger actionLogger) {
+    public RailCar(
+            ExternalAPI externalAPI,
+            RouteMapFactory routeMapFactory,
+            APIObjectFactory apiObjectFactory,
+            ActionLogger actionLogger,
+            DefaultAssets defaultAssets
+    ) {
         super(externalAPI);
         this.routeMapFactory = routeMapFactory;
         this.apiObjectFactory = apiObjectFactory;
         this.actionLogger = actionLogger;
+        this.defaultAssets = defaultAssets;
     }
 
     @PostConstruct
@@ -74,7 +82,7 @@ public class RailCar extends BaseInfObject implements ActorWithReservation {
                         }
                     }
                 }));
-        checkPointFee = apiObjectFactory.getAssetAmount("RA", 10);
+        checkPointFee = apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10);
     }
 
     @Override
@@ -478,5 +486,10 @@ public class RailCar extends BaseInfObject implements ActorWithReservation {
     @Override
     protected Logger logger() {
         return log;
+    }
+
+    @Override
+    public void setReservationWif(String wif) {
+        reservation.setKey(wif);
     }
 }

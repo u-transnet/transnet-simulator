@@ -153,7 +153,6 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
         externalAPI.sendProposal(
                 client.getUTransnetAccount(),
                 routeMap.getStart(),
-                client.getUTransnetAccount(),
                 routeMap.getStart(),
                 routeMap.getNextFee(),
                 "route-map-id"

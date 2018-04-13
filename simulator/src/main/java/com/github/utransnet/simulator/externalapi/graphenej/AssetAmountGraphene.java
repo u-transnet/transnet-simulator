@@ -14,15 +14,11 @@ import lombok.Getter;
 @EqualsAndHashCode(of = {"asset", "amount"})
 public class AssetAmountGraphene implements AssetAmount, GrapheneWrapper<com.github.utransnet.graphenej.AssetAmount> {
 
+
     @Getter
     private AssetGraphene asset;
     @Getter
     private long amount;
-
-    AssetAmountGraphene(com.github.utransnet.graphenej.AssetAmount assetAmount) {
-        asset = new AssetGraphene(assetAmount.getAsset());
-        amount = assetAmount.getAmount().longValue();
-    }
 
     @Override
     public String toString() {

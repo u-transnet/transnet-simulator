@@ -6,6 +6,7 @@ import com.github.utransnet.simulator.actors.task.ActorTaskContext;
 import com.github.utransnet.simulator.actors.task.EventListener;
 import com.github.utransnet.simulator.actors.task.OperationEvent;
 import com.github.utransnet.simulator.externalapi.*;
+import com.github.utransnet.simulator.externalapi.exceptions.NotFoundException;
 import com.github.utransnet.simulator.externalapi.operations.*;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.logging.LoggedAction;
@@ -27,11 +28,12 @@ import java.util.stream.Collectors;
  * Created by Artem on 31.01.2018.
  */
 @Slf4j
-public class CheckPoint extends BaseInfObject {
+public class CheckPoint extends BaseInfObject implements ActorWithReservation {
 
 
     private final APIObjectFactory apiObjectFactory;
     private final ActionLogger actionLogger;
+    private final DefaultAssets defaultAssets;
     @Getter
     private UserAccount reservation;
     private String lastOperationOnReserve = null;
@@ -42,10 +44,16 @@ public class CheckPoint extends BaseInfObject {
     @Setter
     private UserAccount logist;
 
-    public CheckPoint(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory, ActionLogger actionLogger) {
+    public CheckPoint(
+            ExternalAPI externalAPI,
+            APIObjectFactory apiObjectFactory,
+            ActionLogger actionLogger,
+            DefaultAssets defaultAssets
+    ) {
         super(externalAPI);
         this.apiObjectFactory = apiObjectFactory;
         this.actionLogger = actionLogger;
+        this.defaultAssets = defaultAssets;
     }
 
     @PostConstruct
@@ -68,7 +76,7 @@ public class CheckPoint extends BaseInfObject {
                 this::createRailCarFlow
         ));
 
-        railCarFee = apiObjectFactory.getAssetAmount("RA", 10);
+        railCarFee = apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10);
     }
 
 
@@ -254,7 +262,7 @@ public class CheckPoint extends BaseInfObject {
     protected List<String> paidRouteMapIds() {
         return getUTransnetAccount().getTransfers()
                 .stream()
-                .filter(op -> op.getAsset().getId().equals("UTT"))
+                .filter(op -> op.getAsset().getId().equals(defaultAssets.getMainAsset()))
                 .map(TransferOperation::getMemo)
                 .collect(Collectors.toList());
     }
@@ -286,7 +294,12 @@ public class CheckPoint extends BaseInfObject {
     @Override
     protected void setUTransnetAccount(UserAccount uTransnetAccount) {
         super.setUTransnetAccount(uTransnetAccount);
-        reservation = getExternalAPI().getAccountByName(getUTransnetAccount().getId() + "-reserve");
+        String name = getUTransnetAccount().getName() + "-reserve";
+        try {
+            reservation = getExternalAPI().getAccountByName(name);
+        } catch (NotFoundException e) {
+            log.warn("Not found reservation account '" + uTransnetAccount.getName() + "' for '" + name + "'");
+        }
     }
 
     @Override
@@ -304,5 +317,10 @@ public class CheckPoint extends BaseInfObject {
     @Override
     protected Logger logger() {
         return log;
+    }
+
+    @Override
+    public void setReservationWif(String wif) {
+        reservation.setKey(wif);
     }
 }

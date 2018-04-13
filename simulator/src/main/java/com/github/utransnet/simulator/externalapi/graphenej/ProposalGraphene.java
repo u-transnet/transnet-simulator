@@ -41,7 +41,7 @@ public class ProposalGraphene implements Proposal, GrapheneWrapper<com.github.ut
     ProposalGraphene(
             String id,
             List<String> requiredApprovals,
-            BaseOperation proposedOp
+            @Nullable BaseOperation proposedOp
     ) {
         this(id, requiredApprovals, new ArrayList<>(0), proposedOp);
     }

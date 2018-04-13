@@ -48,7 +48,6 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         externalAPI.sendProposal(
                 checkPoint.getReservation(),
                 car,
-                checkPoint.getReservation(),
                 car,
                 apiObjectFactory.getAssetAmount("RA", 10),
                 "route-map-id"
@@ -72,7 +71,6 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         externalAPI.sendProposal(
                 checkPoint.getReservation(),
                 car2,
-                checkPoint.getReservation(),
                 car2,
                 apiObjectFactory.getAssetAmount("RA", 10),
                 "route-map-id"
@@ -88,7 +86,6 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         externalAPI.sendProposal(
                 checkPoint.getReservation(),
                 car,
-                checkPoint.getReservation(),
                 car,
                 apiObjectFactory.getAssetAmount("RA", 10),
                 "route-map-id"
@@ -140,7 +137,6 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         externalAPI.sendProposal(
                 client,
                 checkPoint.getUTransnetAccount(),
-                client,
                 logist,
                 apiObjectFactory.getAssetAmount("RA", 10),
                 "route-map-id"
@@ -222,7 +218,6 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         externalAPI.sendProposal(
                 client,
                 checkPoint.getUTransnetAccount(),
-                client,
                 logist,
                 apiObjectFactory.getAssetAmount("UTT", 10),
                 "route-map-id"
@@ -232,7 +227,6 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         externalAPI.sendProposal(
                 reservation,
                 railCar,
-                checkPoint.getUTransnetAccount(),
                 railCar,
                 apiObjectFactory.getAssetAmount("RA", 10),
                 "route-map-id"
@@ -264,7 +258,7 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
     public static class CheckPoint4Test extends CheckPoint {
 
         CheckPoint4Test(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
-            super(externalAPI, apiObjectFactory);
+            super(externalAPI, apiObjectFactory, null, null);
         }
 
         @Override
