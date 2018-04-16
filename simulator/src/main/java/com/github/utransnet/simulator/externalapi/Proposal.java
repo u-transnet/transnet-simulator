@@ -1,6 +1,7 @@
 package com.github.utransnet.simulator.externalapi;
 
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -11,8 +12,7 @@ public interface Proposal extends ExternalObject {
 
     boolean approved();
 
-    @Deprecated
-        //TODO: remove method
+    @Nullable
     UserAccount getFeePayer();
 
     /**

@@ -235,7 +235,7 @@ public class Client extends Actor {
                     RouteMap routeMap = getRouteMap();
                     if (railCar != null) {
                         Proposal proposal = ((OperationEvent.ProposalCreateEvent) event).getObject();
-                        if (proposal.getFeePayer().equals(railCar)) {
+                        if (Objects.equals(proposal.getFeePayer(), railCar)) {
                             BaseOperation baseOperation = proposal.getOperation();
                             if (baseOperation.getOperationType() == OperationType.TRANSFER) {
                                 TransferOperation operation = (TransferOperation) baseOperation;

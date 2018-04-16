@@ -142,7 +142,7 @@ public class ExternalAPIH2 extends ExternalAPI {
     }
 
     @Override
-    public List<? extends BaseOperation> getAccountHistory(UserAccount account, OperationType operationType) {
+    public List<? extends BaseOperationH2> getAccountHistory(UserAccount account, OperationType operationType) {
         switch (operationType) {
             case TRANSFER:
                 return transferOperationRepository.findByToOrFrom(account.getId(), account.getId())
@@ -156,6 +156,26 @@ public class ExternalAPIH2 extends ExternalAPI {
                         .peek(op -> op.setApiObjectFactory(apiObjectFactory))
                         .sorted(Comparator.comparing(o -> o.creationDate))
                         .collect(Collectors.toList());
+            case PROPOSAL_CREATE:
+                ArrayList<BaseOperationH2> operations = new ArrayList<>();
+                Iterable<ProposalH2> allProposals = proposalRepository.findAll();
+                allProposals.forEach(proposalH2 -> {
+                    proposalH2.setApiObjectFactory(apiObjectFactory);
+                    BaseOperation operation = proposalH2.getOperation();
+                    if (proposalH2.neededApprovals().contains(account.getId())
+                            || operation.getAffectedAccounts().contains(account.getId())) {
+                        HashSet<String> set = new HashSet<>(proposalH2.neededApprovals());
+                        set.addAll(operation.getAffectedAccounts());
+                        ProposalCreateOperationH2 proposalCreateOperation = new ProposalCreateOperationH2(proposalH2, set);
+                        proposalCreateOperation.creationDate = proposalH2.creationDate;
+                        proposalCreateOperation.id = Long.parseLong(proposalH2.getId());
+                        operations.add(proposalCreateOperation);
+                    }
+                });
+                return operations.stream()
+                        .peek(op -> op.setApiObjectFactory(apiObjectFactory))
+                        .sorted(Comparator.comparing(o -> o.creationDate))
+                        .collect(Collectors.toList());
         }
         return new ArrayList<>(0);
     }
@@ -163,27 +183,13 @@ public class ExternalAPIH2 extends ExternalAPI {
     @Override
     public List<? extends BaseOperation> getAccountHistory(UserAccount account) {
         ArrayList<BaseOperationH2> operations = new ArrayList<>();
-        operations.addAll(transferOperationRepository.findByToOrFrom(account.getId(), account.getId()));
-        operations.addAll(messageOperationRepository.findByToOrFrom(account.getId(), account.getId()));
+        operations.addAll(getAccountHistory(account, OperationType.TRANSFER));
+        operations.addAll(getAccountHistory(account, OperationType.MESSAGE));
+        operations.addAll(getAccountHistory(account, OperationType.PROPOSAL_CREATE));
 
-        Iterable<ProposalH2> allProposals = proposalRepository.findAll();
-        allProposals.forEach(proposalH2 -> {
-            proposalH2.setApiObjectFactory(apiObjectFactory);
-            BaseOperation operation = proposalH2.getOperation();
-            if (proposalH2.neededApprovals().contains(account.getId())
-                    || operation.getAffectedAccounts().contains(account.getId())) {
-                HashSet<String> set = new HashSet<>(proposalH2.neededApprovals());
-                set.addAll(operation.getAffectedAccounts());
-                ProposalCreateOperationH2 proposalCreateOperation = new ProposalCreateOperationH2(proposalH2, set);
-                proposalCreateOperation.creationDate = proposalH2.creationDate;
-                proposalCreateOperation.id = Long.parseLong(proposalH2.getId());
-                operations.add(proposalCreateOperation);
-            }
-        });
 
 
         return operations.stream()
-                .peek(op -> op.setApiObjectFactory(apiObjectFactory))
                 .sorted(Comparator.comparing(o -> o.creationDate))
                 .collect(Collectors.toList());
     }
@@ -192,10 +198,13 @@ public class ExternalAPIH2 extends ExternalAPI {
     public List<Proposal> getAccountProposals(UserAccount account) {
         return StreamSupport.stream(proposalRepository.findAll().spliterator(), false)
                 .peek(op -> op.setApiObjectFactory(apiObjectFactory))
+                // hide approved proposal, coz it can't be received in real graphene
+//                .filter(proposalH2 -> !proposalH2.approved())
                 .filter(
                         proposalH2 -> proposalH2.neededApprovals().contains(account.getId())
                                 || proposalH2.getOperation().getAffectedAccounts().contains(account.getId())
                 )
+                .map(ProposalH2::copyWithoutFeePayer)
                 .collect(Collectors.toList());
     }
 

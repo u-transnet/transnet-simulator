@@ -8,7 +8,7 @@ import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
-import com.github.utransnet.simulator.externalapi.operations.ProposalUpdateOperation;
+import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.Scenario;
 import lombok.extern.slf4j.Slf4j;
@@ -86,42 +86,50 @@ public class PositionMonitoring {
                         hasClient.setFalse();
                     }
 
-                    if (newObject instanceof ProposalUpdateOperation) {
-                        Proposal proposal = ((ProposalUpdateOperation) newObject).getProposal();
-                        BaseOperation operation = proposal.getOperation();
+                    Proposal last = externalAPI
+                            .getAccountHistory(railCar.getUTransnetAccount(), OperationType.PROPOSAL_CREATE)
+                            .stream()
+                            .map(o -> (ProposalCreateOperation) o)
+                            .map(ProposalCreateOperation::getProposal)
+                            .filter(proposal -> {
+                                BaseOperation operation = proposal.getOperation();
+                                if (operation.getOperationType() == OperationType.TRANSFER) {
+                                    if (((TransferOperation) operation).getAsset().getId().equals("RA")) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            })
+                            .reduce((p1, p2) -> p2).orElse(null);
+                    if (last != null) {
+                        BaseOperation operation = last.getOperation();
                         if (operation.getOperationType() == OperationType.TRANSFER) {
-                            checkRailCarProposal(railCar, proposal, (TransferOperation) operation);
+                            TransferOperation transferOperation = (TransferOperation) operation;
+                            if (transferOperation.getTo().equals(railCar.getUTransnetAccount())) {
+                                if (last.approved()) {
+                                    log.trace(String.format(
+                                            "<%s>|<%s>: RailCar '%s' entered check point '%s'",
+                                            railCar.getUTransnetAccount().getName(),
+                                            "enterCP",
+                                            railCar.getUTransnetAccount().getName(),
+                                            transferOperation.getFrom().getName().replace("-reserve", "")
+                                    ));
+                                }
+                            } else if (transferOperation.getFrom().equals(railCar.getReservation())) {
+                                if (last.approved()) {
+                                    log.trace(String.format(
+                                            "<%s>|<%s>: RailCar '%s' left check point '%s'",
+                                            railCar.getUTransnetAccount().getName(),
+                                            "leaveCP",
+                                            railCar.getUTransnetAccount().getName(),
+                                            transferOperation.getTo().getName()
+                                    ));
+                                }
+                            }
                         }
                     }
-
                 }
         );
-    }
-
-    private void checkRailCarProposal(RailCar railCar, Proposal proposal, TransferOperation transferOperation) {
-        if (!transferOperation.getAsset().getId().equals("RA")) {
-            return;
-        }
-        if (!proposal.approved()) {
-            return;
-        }
-        if (transferOperation.getTo().equals(railCar.getUTransnetAccount())) {
-            log.trace(String.format(
-                    "<%s>|<%s>: RailCar '%s' entered check point '%s'",
-                    railCar.getUTransnetAccount().getName(),
-                    "enterCP",
-                    railCar.getUTransnetAccount().getName(),
-                    transferOperation.getFrom().getName().replace("-reserve", "")
-            ));
-        } else if (transferOperation.getFrom().equals(railCar.getReservation())) {
-            log.trace(String.format(
-                    "<%s>|<%s>: RailCar '%s' left check point '%s'",
-                    railCar.getUTransnetAccount().getName(),
-                    "leaveCP",
-                    railCar.getUTransnetAccount().getName(),
-                    transferOperation.getTo().getName()
-            ));
-        }
     }
 
     private void addCheckPoint(CheckPoint checkPoint) {
