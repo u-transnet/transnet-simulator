@@ -5,15 +5,19 @@ import com.github.utransnet.simulator.actors.CheckPoint;
 import com.github.utransnet.simulator.actors.RailCar;
 import com.github.utransnet.simulator.externalapi.DefaultAssets;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
-import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
-import com.github.utransnet.simulator.externalapi.operations.OperationType;
-import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.route.Scenario;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.commons.lang3.mutable.MutableObject;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * Created by Artem on 19.03.2018.
@@ -47,6 +51,7 @@ public class PositionMonitoring {
     private void addRailCar(RailCar railCar) {
         MutableBoolean hasClient = new MutableBoolean(false);
         MutableBoolean onStation = new MutableBoolean(false);
+        Mutable<String> actualCheckpoints = new MutableObject<>("");
         externalAPI.listenAccountOperations(
                 "logger-update-listener-" + railCar.getId(),
                 Utils.setOf(railCar.getUTransnetAccount(), railCar.getReservation()),
@@ -89,48 +94,39 @@ public class PositionMonitoring {
                         hasClient.setFalse();
                     }
 
-                    Proposal last = externalAPI
-                            .getAccountHistory(railCar.getUTransnetAccount(), OperationType.PROPOSAL_CREATE)
+
+                    List<String> enteredCP = railCar.getUTransnetAccount()
+                            .getTransfers()
                             .stream()
-                            .map(o -> (ProposalCreateOperation) o)
-                            .map(ProposalCreateOperation::getProposal)
-                            .filter(proposal -> {
-                                BaseOperation operation = proposal.getOperation();
-                                if (operation.getOperationType() == OperationType.TRANSFER) {
-                                    if (((TransferOperation) operation).getAsset()
-                                            .getId().equals(defaultAssets.getResourceAsset())) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            })
-                            .reduce((p1, p2) -> p2).orElse(null);
-                    if (last != null) {
-                        BaseOperation operation = last.getOperation();
-                        if (operation.getOperationType() == OperationType.TRANSFER) {
-                            TransferOperation transferOperation = (TransferOperation) operation;
-                            if (transferOperation.getTo().equals(railCar.getUTransnetAccount())) {
-                                if (last.approved()) {
-                                    log.trace(String.format(
-                                            "<%s>|<%s>: RailCar '%s' entered check point '%s'",
-                                            railCar.getUTransnetAccount().getName(),
-                                            "enterCP",
-                                            railCar.getUTransnetAccount().getName(),
-                                            transferOperation.getFrom().getName().replace("-reserve", "")
-                                    ));
-                                }
-                            } else if (transferOperation.getFrom().equals(railCar.getReservation())) {
-                                if (last.approved()) {
-                                    log.trace(String.format(
-                                            "<%s>|<%s>: RailCar '%s' left check point '%s'",
-                                            railCar.getUTransnetAccount().getName(),
-                                            "leaveCP",
-                                            railCar.getUTransnetAccount().getName(),
-                                            transferOperation.getTo().getName()
-                                    ));
-                                }
-                            }
-                        }
+                            .filter(to -> to.getTo().equals(railCar.getUTransnetAccount()))
+                            .filter(to -> Objects.equals(to.getAsset().getSymbol(), defaultAssets.getResourceAsset()))
+                            .map(TransferOperation::getFrom)
+                            .map(UserAccount::getName)
+                            .filter(s -> s.contains("-reserve"))
+                            .map(s -> s.replace("-reserve", ""))
+                            .collect(Collectors.toList());
+
+                    List<String> leftCP = railCar.getReservation()
+                            .getTransfers()
+                            .stream()
+                            .filter(to -> to.getFrom().equals(railCar.getReservation()))
+                            .filter(to -> Objects.equals(to.getAsset().getSymbol(), defaultAssets.getResourceAsset()))
+                            .map(TransferOperation::getTo)
+                            .map(UserAccount::getName)
+                            .collect(Collectors.toList());
+
+                    enteredCP.removeAll(leftCP);
+
+                    String actualCPs = enteredCP.stream().collect(joining(", "));
+                    if (!actualCPs.equals(actualCheckpoints.getValue())) {
+                        log.trace(String.format(
+                                "<%s>|<%s>: RailCar '%s' currently in  '%s' check points",
+                                railCar.getUTransnetAccount().getName(),
+                                "enterCP",
+                                railCar.getUTransnetAccount().getName(),
+                                actualCPs
+                        ));
+                        actualCheckpoints.setValue(actualCPs);
                     }
                 }
         );
