@@ -6,8 +6,8 @@ import com.github.utransnet.simulator.actors.factory.RailCarBuilder;
 import com.github.utransnet.simulator.actors.task.ActorTask;
 import com.github.utransnet.simulator.actors.task.DelayedAction;
 import com.github.utransnet.simulator.externalapi.*;
-import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
+import com.github.utransnet.simulator.externalapi.operations.ProposalCreateOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 
 import java.lang.reflect.Field;
@@ -158,6 +159,7 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         UserAccount station = externalAPI.createAccount("start");
         UserAccount client = externalAPI.createAccount("client");
         UserAccount checkpoint = externalAPI.createAccount("middle");
+        UserAccount checkpointReserve = externalAPI.createAccount("middle-reserve");
         RouteMap routeMap = routeMapFactory.fromJsonForce(json);
         routeMap.goNext();
         railCar.setRouteMap(routeMap);
@@ -194,19 +196,20 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         railCar.update(1);
         assertNotNull(railCar.getCurrentTask());
         assertEquals("wait-accept-from-check-point", railCar.getCurrentTask().getName());
-        Proposal requestRAFromCP = Utils.getLast(checkpoint.getProposals());
+        Proposal requestRAFromCP = ((ProposalCreateOperation) Utils.getLast(
+                externalAPI.getAccountHistory(checkpointReserve, OperationType.PROPOSAL_CREATE)
+        )).getProposal();
         assertNotNull(requestRAFromCP);
         assertEquals(OperationType.TRANSFER, requestRAFromCP.getOperation().getOperationType());
         TransferOperation raFromCP = (TransferOperation) requestRAFromCP.getOperation();
         assertEquals(railCar.getUTransnetAccount(), raFromCP.getTo());
-        assertEquals(checkpoint, raFromCP.getFrom());
+        assertEquals(checkpointReserve, raFromCP.getFrom());
         assertEquals(routeMap.getId(), raFromCP.getMemo());
 
-        checkpoint.approveProposal(requestRAFromCP);
+        checkpointReserve.approveProposal(requestRAFromCP);
         externalAPI.sendProposal(
                 reserve,
                 checkpoint,
-                reserve,
                 checkpoint,
                 assetAmount,
                 routeMap.getId()
@@ -214,10 +217,11 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
 
         railCar.update(0);
 
-        MessageOperation messageOperation = Utils.getLast(client.getMessages());
+        Proposal messageOperation = Utils.getLast(client.getProposals());
         assertNotNull(messageOperation);
-        assertEquals(railCar.getUTransnetAccount(), messageOperation.getFrom());
-        assertEquals("test-id/end", messageOperation.getMessage());
+        TransferOperation operation = (TransferOperation) messageOperation.getOperation();
+        assertEquals(checkpoint, operation.getTo());
+        assertEquals("test-id", operation.getMemo());
 
         assertNull(railCar.getCurrentTask());
         railCar.leaveAndGoToNextCP();
@@ -246,6 +250,7 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         railCar.setUTransnetAccount(externalAPI.createAccount("rail-car"));
         UserAccount reserve = externalAPI.createAccount("rail-car-reserve");
         UserAccount checkpoint = externalAPI.createAccount("middle");
+        UserAccount checkpointReserve = externalAPI.createAccount("middle-reserve");
         RouteMap routeMap = routeMapFactory.fromJsonForce(json);
         routeMap.goNext();
         railCar.setRouteMap(routeMap);
@@ -276,12 +281,13 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         railCar.askNextCheckPoint(routeMap.getNextAccount());
         railCar.update(0);
         railCar.update(1);
-        Proposal requestRAFromCP = Utils.getLast(checkpoint.getProposals());
-        checkpoint.approveProposal(requestRAFromCP);
+        Proposal requestRAFromCP = Utils.getLast(checkpointReserve.getProposals());
+        checkpointReserve.approveProposal(requestRAFromCP);
 
         railCar.update(0);
         assertNull(railCar.getCurrentTask());
         railCar.leaveAndGoToNextCP();
+        railCar.update(0);
         assertNotNull(railCar.getCurrentTask());
         assertEquals("leave-check-point", railCar.getCurrentTask().getName());
 
@@ -294,7 +300,6 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
         externalAPI.sendProposal(
                 reserve,
                 checkpoint,
-                reserve,
                 checkpoint,
                 assetAmount,
                 routeMap.getId()
@@ -310,6 +315,9 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
     }
 
     @Configuration
+    @Import({
+            ActorsConfigForTest.class
+    })
     public static class Config extends ActorsConfigForTest {
 
         @Bean
@@ -319,9 +327,10 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
                 ExternalAPI externalAPI,
                 RouteMapFactory routeMapFactory,
                 APIObjectFactory objectFactory,
-                ActionLogger actionLogger
+                ActionLogger actionLogger,
+                DefaultAssets defaultAssets
         ) {
-            return new RailCar4Test(externalAPI, routeMapFactory, objectFactory, actionLogger);
+            return new RailCar4Test(externalAPI, routeMapFactory, objectFactory, actionLogger, defaultAssets);
         }
 
 
@@ -333,9 +342,10 @@ public class RailCarTest extends SpringTest<RailCarTest.Config> {
                 ExternalAPI externalAPI,
                 RouteMapFactory routeMapFactory,
                 APIObjectFactory objectFactory,
-                ActionLogger actionLogger
+                ActionLogger actionLogger,
+                DefaultAssets defaultAssets
         ) {
-            super(externalAPI, routeMapFactory, objectFactory, actionLogger);
+            super(externalAPI, routeMapFactory, objectFactory, actionLogger, defaultAssets);
         }
 
         @Override

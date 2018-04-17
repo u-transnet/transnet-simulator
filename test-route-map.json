@@ -4,20 +4,20 @@
     {
       "id": "cp1",
       "distance": 0,
-      "fee": "10 UTT",
-      "railCarFee": "10 UTT"
+      "fee": "10 SIMULATOR.UTT",
+      "railCarFee": "10 SIMULATOR.UTT"
     },
     {
       "id": "cp2",
       "distance": 30,
-      "fee": "3 UTT",
-      "railCarFee": "3 UTT"
+      "fee": "3 SIMULATOR.UTT",
+      "railCarFee": "3 SIMULATOR.UTT"
     },
     {
       "id": "cp3",
       "distance": 100,
-      "fee": "10 UTT",
-      "railCarFee": "10 UTT"
+      "fee": "10 SIMULATOR.UTT",
+      "railCarFee": "10 SIMULATOR.UTT"
     }
   ]
 }

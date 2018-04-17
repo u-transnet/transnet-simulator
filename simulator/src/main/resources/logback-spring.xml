@@ -38,7 +38,12 @@
         <appender-ref ref="movements"/>
     </logger>
 
-    <logger name="logging.level.com.github.utransnet">
+    <!--    <logger name="com.github.utransnet">
+            <level value="DEBUG"/>
+            <appender-ref ref="CONSOLE"/>
+        </logger>-->
+
+    <logger name="com.github.utransnet.graphenej">
         <level value="DEBUG"/>
         <appender-ref ref="CONSOLE"/>
     </logger>

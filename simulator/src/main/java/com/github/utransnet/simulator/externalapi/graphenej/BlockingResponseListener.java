@@ -20,9 +20,9 @@ public class BlockingResponseListener<T> implements WitnessResponseListener {
     @SuppressWarnings("unchecked")
     @Override
     public void onSuccess(WitnessResponse response) {
-        log.debug("onSuccess");
+        log.trace("onSuccess");
         if (response.result != null) {
-            log.debug(response.result.toString());
+            log.trace(response.result.toString());
         }
         responseObject.setResult((T) response.result);
         synchronized (responseObject) {

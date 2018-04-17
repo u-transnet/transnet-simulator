@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Artem on 13.03.2018.
@@ -16,10 +17,15 @@ import java.nio.file.Paths;
 public class ScenarioUploader {
 
     static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private static OkHttpClient client = new OkHttpClient();
+    private static OkHttpClient client;
 
     @SneakyThrows
     public static void main(String[] args) {
+        client = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
         sendPost("http://localhost:8989/import_config", "test-scenario.json");
         sendPost("http://localhost:8989/import_route", "test-route-map.json");
     }

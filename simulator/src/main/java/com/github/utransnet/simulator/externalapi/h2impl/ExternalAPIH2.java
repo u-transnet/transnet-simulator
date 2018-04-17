@@ -104,7 +104,7 @@ public class ExternalAPIH2 extends ExternalAPI {
                         accsToNotify.add(operation1.getToStr());
                         if (proposalH2.approved()) {
                             messageOperationRepository.save(operation1);
-                            proposalRepository.delete(proposalH2);
+//                            proposalRepository.delete(proposalH2);
                             updaterObject = operation1;
                         }
                     }

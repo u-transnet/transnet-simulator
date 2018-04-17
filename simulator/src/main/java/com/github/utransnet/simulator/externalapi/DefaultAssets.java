@@ -6,7 +6,7 @@ package com.github.utransnet.simulator.externalapi;
 public class DefaultAssets {
 
     public String getMainAsset() {
-        return "SYMULATOR.UTT";
+        return "SIMULATOR.UTT";
     }
 
     public String getFeeAsset() {
@@ -14,10 +14,10 @@ public class DefaultAssets {
     }
 
     public String getResourceAsset() {
-        return "SYMULATOR.RA";
+        return "SIMULATOR.RA";
     }
 
     public String getMessageAsset() {
-        return "SYMULATOR.MSG";
+        return "SIMULATOR.MSG";
     }
 }

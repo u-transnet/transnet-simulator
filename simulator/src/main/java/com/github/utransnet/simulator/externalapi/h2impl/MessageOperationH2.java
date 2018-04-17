@@ -24,6 +24,9 @@ public class MessageOperationH2 extends BaseOperationH2 implements MessageOperat
     private String from;
     @Column(name = "to_")
     private String to;
+
+    //    @Lob // if varchar(2048) not enough
+    @Column(length = 2048)
     private String message;
 
     MessageOperationH2() {

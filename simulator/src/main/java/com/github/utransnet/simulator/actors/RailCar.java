@@ -332,7 +332,8 @@ public class RailCar extends BaseInfObject implements ActorWithReservation {
         }
 
         reservation.approveProposal(proposals.get(0));
-        debug("Leaving check point '" + proposals.get(0).getFeePayer().getName() + "'");
+        UserAccount checkPoint = proposals.get(0).getFeePayer();
+        debug("Leaving check point '" + (checkPoint != null ? checkPoint.getName() : "") + "'");
         start(context);
     }
 

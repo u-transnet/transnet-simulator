@@ -2,16 +2,14 @@ package com.github.utransnet.simulator.actors;
 
 import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.Utils;
-import com.github.utransnet.simulator.externalapi.APIObjectFactory;
-import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.Proposal;
-import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -47,14 +45,19 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired
     InputQueue<RouteMap> inputQueue;
+    @SuppressWarnings("SpringJavaAutowiredMembersInspection")
+    @Autowired
+    DefaultAssets defaultAssets;
 
     @Test
     public void insufficientAmountPaid() throws Exception {
+        inputQueue.offer(routeMapFactory.fromJsonForce(json));
         Logist4Test logist = context.getBean(Logist4Test.class);
         logist.setUTransnetAccount(externalAPI.createAccount("logist"));
+        logist.setRouteMapPrice(1000);
 
         UserAccount client = externalAPI.createAccount("client");
-        client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount("UTT", 2), "");
+        client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 2), "");
         logist.update(0);
 
         MessageOperation messageOperation = Utils.getLast(client.getMessagesFrom(logist.getUTransnetAccount()));
@@ -69,7 +72,7 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
         inputQueue.offer(routeMapFactory.fromJsonForce(json));
 
         UserAccount client = externalAPI.createAccount("client");
-        client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount("UTT", 10), "");
+        client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10), "");
         logist.update(0);
 
         assertNull(Utils.getLast(client.getMessagesFrom(logist.getUTransnetAccount())));
@@ -92,11 +95,13 @@ public class LogistTest extends SpringTest<LogistTest.Config> {
     }
 
     @Test
+    @Ignore // Not used in current schema
     public void refund() throws Exception {
+        inputQueue.offer(routeMapFactory.fromJsonForce(json));
         Logist4Test logist = context.getBean(Logist4Test.class);
         logist.setUTransnetAccount(externalAPI.createAccount("logist"));
         UserAccount client = externalAPI.createAccount("client");
-        client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount("UTT", 10), "");
+        client.sendAsset(logist.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10), "");
         logist.update(0); // check incoming transfer
         logist.update(60); // create RouteMap
 

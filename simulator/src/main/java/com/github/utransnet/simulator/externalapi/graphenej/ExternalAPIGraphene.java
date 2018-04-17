@@ -21,6 +21,7 @@ import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketListener;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.bitcoinj.core.ECKey;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
@@ -123,7 +124,11 @@ public class ExternalAPIGraphene extends ExternalAPI {
         factory = new WebSocketFactory();
         factory.setSSLContext(context);
 
-        threadPool = Executors.newCachedThreadPool();
+        BasicThreadFactory factory = new BasicThreadFactory.Builder()
+                .namingPattern("ExternalAPI-%d")
+                .daemon(false)
+                .build();
+        threadPool = Executors.newCachedThreadPool(factory);
 
 
         feeAsset = getAssetSymbol(defaultAssets.getFeeAsset());
@@ -340,11 +345,13 @@ public class ExternalAPIGraphene extends ExternalAPI {
                 BaseOperationGraphene baseOperationGraphene = operationConverter.fromGrapheneOp(
                         historicalOperation.getOperation()
                 );
-                if (baseOperationGraphene != null &&
-                        baseOperationGraphene.getOperationType() == OperationType.PROPOSAL_CREATE) {
-                    if (historicalOperation.result.length == 2) {
-                        String proposalId = (String) historicalOperation.result[1];
-                        ((ProposalCreateOperationGraphene) baseOperationGraphene).getProposal().setId(proposalId);
+                if (baseOperationGraphene != null) {
+                    baseOperationGraphene.setId(historicalOperation.getId());
+                    if (baseOperationGraphene.getOperationType() == OperationType.PROPOSAL_CREATE) {
+                        if (historicalOperation.result.length == 2) {
+                            String proposalId = (String) historicalOperation.result[1];
+                            ((ProposalCreateOperationGraphene) baseOperationGraphene).getProposal().setId(proposalId);
+                        }
                     }
                 }
                 history.add(baseOperationGraphene);

@@ -3,10 +3,7 @@ package com.github.utransnet.simulator.actors;
 import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.Utils;
 import com.github.utransnet.simulator.actors.task.ActorTask;
-import com.github.utransnet.simulator.externalapi.APIObjectFactory;
-import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.Proposal;
-import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.BaseOperation;
 import com.github.utransnet.simulator.externalapi.operations.MessageOperation;
 import com.github.utransnet.simulator.externalapi.operations.OperationType;
@@ -14,6 +11,8 @@ import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
+import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -55,9 +54,18 @@ public class StationTest extends SpringTest<StationTest.Config> {
         Station4Test station = context.getBean(Station4Test.class);
         station.setUTransnetAccount(externalAPI.createAccount(stationId));
 
+        CP4Test checkPoint = context.getBean(CP4Test.class);
+        checkPoint.setUTransnetAccount(externalAPI.createAccount(stationId));
+        station.setCheckPoint(checkPoint);
+
         UserAccount client = externalAPI.createAccount("client");
         UserAccount railCar = externalAPI.createAccount("rail-car");
+        checkPoint.setRailCar(railCar);
+
         RouteMap routeMap = routeMapFactory.fromJsonForce(json);
+
+        // tell station about vacant RailCar
+        railCar.sendMessage(station.getUTransnetAccount(), "FREE");
 
         client.sendMessage(station.getUTransnetAccount(), json);
         station.update(0);
@@ -85,7 +93,7 @@ public class StationTest extends SpringTest<StationTest.Config> {
         station.update(1);
         Proposal proposal = Utils.getLast(client.getProposals());
         assertNotNull(proposal);
-        assertEquals(station.getUTransnetAccount(), proposal.getFeePayer());
+//        assertEquals(station.getUTransnetAccount(), proposal.getFeePayer());
         assertEquals(1, proposal.neededApprovals().size());
         assertEquals(client.getId(), proposal.neededApprovals().get(0));
 
@@ -107,6 +115,10 @@ public class StationTest extends SpringTest<StationTest.Config> {
     public void init() throws Exception {
         Station4Test station = context.getBean(Station4Test.class);
         station.setUTransnetAccount(externalAPI.createAccount(stationId));
+
+        CP4Test checkPoint = context.getBean(CP4Test.class);
+        checkPoint.setUTransnetAccount(externalAPI.createAccount(stationId));
+        station.setCheckPoint(checkPoint);
 
         UserAccount client = externalAPI.createAccount("client");
 
@@ -152,9 +164,22 @@ public class StationTest extends SpringTest<StationTest.Config> {
                 ExternalAPI externalAPI,
                 RouteMapFactory routeMapFactory,
                 APIObjectFactory apiObjectFactory,
-                ActionLogger actionLogger
+                ActionLogger actionLogger,
+                DefaultAssets defaultAssets
         ) {
-            return new Station4Test(externalAPI, routeMapFactory, apiObjectFactory, actionLogger);
+            return new Station4Test(externalAPI, routeMapFactory, apiObjectFactory, actionLogger, defaultAssets);
+        }
+
+        @Bean
+        @Scope("prototype")
+        @Autowired
+        CP4Test cp4Test(
+                ExternalAPI externalAPI,
+                APIObjectFactory apiObjectFactory,
+                ActionLogger actionLogger,
+                DefaultAssets defaultAssets
+        ) {
+            return new CP4Test(externalAPI, apiObjectFactory, actionLogger, defaultAssets);
         }
 
     }
@@ -165,9 +190,10 @@ public class StationTest extends SpringTest<StationTest.Config> {
                 ExternalAPI externalAPI,
                 RouteMapFactory routeMapFactory,
                 APIObjectFactory apiObjectFactory,
-                ActionLogger actionLogger
+                ActionLogger actionLogger,
+                DefaultAssets defaultAssets
         ) {
-            super(externalAPI, routeMapFactory, apiObjectFactory, actionLogger);
+            super(externalAPI, routeMapFactory, apiObjectFactory, actionLogger, defaultAssets);
         }
 
         @Override
@@ -178,6 +204,26 @@ public class StationTest extends SpringTest<StationTest.Config> {
         @Override
         public void setUTransnetAccount(UserAccount userAccount) {
             super.setUTransnetAccount(userAccount);
+        }
+    }
+
+    public static class CP4Test extends CheckPoint {
+
+        @Setter
+        private UserAccount railCar;
+
+        CP4Test(
+                ExternalAPI externalAPI,
+                APIObjectFactory apiObjectFactory,
+                ActionLogger actionLogger,
+                DefaultAssets defaultAssets
+        ) {
+            super(externalAPI, apiObjectFactory, actionLogger, defaultAssets);
+        }
+
+        @Override
+        public @Nullable UserAccount getCurrentRailCar() {
+            return railCar;
         }
     }
 }

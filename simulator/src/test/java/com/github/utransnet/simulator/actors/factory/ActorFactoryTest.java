@@ -3,6 +3,7 @@ package com.github.utransnet.simulator.actors.factory;
 import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.actors.*;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.DefaultAssets;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.logging.ActionLogger;
 import com.github.utransnet.simulator.testservices.APIObjectFactoryTestImpl;
@@ -79,6 +80,11 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
     @SuppressWarnings("ConstantConditions")
     @Configuration
     static class Config {
+        @Bean
+        @Scope("singleton")
+        DefaultAssets defaultAssets() {
+            return new DefaultAssets();
+        }
 
         @Bean
         @Scope("singleton")
@@ -151,20 +157,20 @@ public class ActorFactoryTest extends SpringTest<ActorFactoryTest.Config> {
 
         @Bean
         @Autowired
-        RailCar railCar(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger) {
-            return new RailCar(externalAPI, null, objectFactory, actionLogger);
+        RailCar railCar(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger, DefaultAssets defaultAssets) {
+            return new RailCar(externalAPI, null, objectFactory, actionLogger, defaultAssets);
         }
 
         @Bean
         @Autowired
-        Station station(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger) {
-            return new Station(externalAPI, null, objectFactory, actionLogger);
+        Station station(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger, DefaultAssets defaultAssets) {
+            return new Station(externalAPI, null, objectFactory, actionLogger, defaultAssets);
         }
 
         @Bean
         @Autowired
-        CheckPoint checkPoint(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
-            return new CheckPoint(externalAPI, objectFactory);
+        CheckPoint checkPoint(ExternalAPI externalAPI, APIObjectFactory objectFactory, ActionLogger actionLogger, DefaultAssets defaultAssets) {
+            return new CheckPoint(externalAPI, objectFactory, actionLogger, defaultAssets);
         }
 
     }

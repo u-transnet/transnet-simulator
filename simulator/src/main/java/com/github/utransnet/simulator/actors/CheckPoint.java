@@ -91,7 +91,7 @@ public class CheckPoint extends BaseInfObject implements ActorWithReservation {
         if (proposedOperation.getOperationType() == OperationType.TRANSFER) {
             TransferOperation operation = (TransferOperation) proposedOperation;
             if (Objects.equals(proposal.getFeePayer(), logist)) {
-                if (routeMapIdsToServe().contains(operation.getMemo())) {
+                if (!operation.getFrom().equals(getUTransnetAccount()) && !operation.getFrom().equals(reservation)) {
                     info("Making reservation for '" + operation.getMemo()
                             + "/" + operation.getFrom().getId() + "'");
                     getUTransnetAccount().sendAsset(
@@ -149,7 +149,7 @@ public class CheckPoint extends BaseInfObject implements ActorWithReservation {
                             .onEnd(this::askPaymentFromRailCar)
                             .build()
                             .createNext()
-                            .name("wait-railc-car-exit-and-close-gate")
+                            .name("wait-rail-car-exit-and-close-gate")
                             .executor(this)
                             .context(new ActorTaskContext(
                                     OperationEvent.Type.TRANSFER,
@@ -164,7 +164,12 @@ public class CheckPoint extends BaseInfObject implements ActorWithReservation {
 
     private boolean waitPaymentFromClient(ActorTaskContext context, OperationEvent event) {
         TransferOperation operation = ((OperationEvent.TransferEvent) event).getObject();
-        return routeMapIdsToServe().contains(operation.getMemo());
+        if (operation.getTo().equals(getUTransnetAccount())) {
+            String memo = operation.getMemo();
+            return routeMapIdsToServe().contains(memo.split("/")[0]);
+        } else {
+            return false;
+        }
     }
 
     private void askPaymentFromRailCar(ActorTaskContext context) {
@@ -223,12 +228,8 @@ public class CheckPoint extends BaseInfObject implements ActorWithReservation {
                 .filter(userAccount -> !userAccount.equals(reservation))
                 .collect(Collectors.toList());
 
-        List<UserAccount> wentOutRailCars = getUTransnetAccount().getProposals()
+        List<UserAccount> wentOutRailCars = getUTransnetAccount().getTransfers()
                 .stream()
-                .filter(Proposal::approved)
-                .map(Proposal::getOperation)
-                .filter(operation -> operation.getOperationType() == OperationType.TRANSFER)
-                .map(operation -> (TransferOperation) operation)
                 .filter(op -> op.getTo().equals(getUTransnetAccount()))
                 .map(TransferOperation::getFrom)
                 .map(this::findAccountFromReservation)
@@ -247,7 +248,7 @@ public class CheckPoint extends BaseInfObject implements ActorWithReservation {
         }
         if (railCarsInCheckPoint.size() > 1) {
             log.warn("[" + getUTransnetAccount().getName() + "]: there are "
-                    + railCarsInCheckPoint.size() + " cars, that not leaved chack point");
+                    + railCarsInCheckPoint.size() + " cars, that not leaved check point");
         }
         return Utils.getLast(allRailCars);
     }

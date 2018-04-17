@@ -15,7 +15,6 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     public void sendProposal(
             UserAccount from,
             UserAccount to,
-            UserAccount proposingAccount,
             UserAccount feePayer,
             AssetAmount assetAmount,
             String memo

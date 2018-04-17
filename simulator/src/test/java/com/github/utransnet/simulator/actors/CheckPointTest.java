@@ -2,12 +2,11 @@ package com.github.utransnet.simulator.actors;
 
 import com.github.utransnet.simulator.SpringTest;
 import com.github.utransnet.simulator.Utils;
+import com.github.utransnet.simulator.actors.factory.Actor;
 import com.github.utransnet.simulator.actors.task.ActorTask;
-import com.github.utransnet.simulator.externalapi.APIObjectFactory;
-import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.Proposal;
-import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.externalapi.*;
 import com.github.utransnet.simulator.externalapi.operations.TransferOperation;
+import com.github.utransnet.simulator.logging.ActionLogger;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -36,6 +35,9 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
     @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired
     ApplicationContext context;
+    @SuppressWarnings("SpringJavaAutowiredMembersInspection")
+    @Autowired
+    DefaultAssets defaultAssets;
 
     @Test
     public void getCurrentRailCar() throws Exception {
@@ -49,7 +51,7 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 checkPoint.getReservation(),
                 car,
                 car,
-                apiObjectFactory.getAssetAmount("RA", 10),
+                apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10),
                 "route-map-id"
         );
 
@@ -61,7 +63,7 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         assertNotNull(checkPoint.getCurrentRailCar());
         assertEquals(car, checkPoint.getCurrentRailCar());
 
-        car.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount("RA", 10), "");
+        car.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10), "");
         assertNull(checkPoint.getCurrentRailCar());
 
         UserAccount car2 = externalAPI.createAccount("car2");
@@ -72,14 +74,14 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 checkPoint.getReservation(),
                 car2,
                 car2,
-                apiObjectFactory.getAssetAmount("RA", 10),
+                apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10),
                 "route-map-id"
         );
 
         assertNotNull(checkPoint.getCurrentRailCar());
         assertEquals(car2, checkPoint.getCurrentRailCar());
 
-        car2.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount("RA", 10), "");
+        car2.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10), "");
         assertNull(checkPoint.getCurrentRailCar());
 
 
@@ -87,7 +89,7 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 checkPoint.getReservation(),
                 car,
                 car,
-                apiObjectFactory.getAssetAmount("RA", 10),
+                apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10),
                 "route-map-id"
         );
 
@@ -119,9 +121,9 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         assertTrue(checkPoint.paidRouteMapIds().isEmpty());
 
         UserAccount client = externalAPI.createAccount("logist");
-        client.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount("UTT", 10), "id-1");
+        client.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10), "id-1");
         assertThat(checkPoint.paidRouteMapIds(), is(Collections.singletonList("id-1")));
-        client.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount("UTT", 10), "id-2");
+        client.sendAsset(checkPoint.getUTransnetAccount(), apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10), "id-2");
         assertThat(checkPoint.paidRouteMapIds(), is(Arrays.asList("id-1", "id-2")));
 
     }
@@ -138,7 +140,7 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 client,
                 checkPoint.getUTransnetAccount(),
                 logist,
-                apiObjectFactory.getAssetAmount("RA", 10),
+                apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10),
                 "route-map-id"
         );
         checkPoint.update(0);
@@ -155,15 +157,17 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         checkPoint.setUTransnetAccount(externalAPI.createAccount("cp"));
 
         UserAccount railCar = externalAPI.createAccount("rail-car");
+        UserAccount railCarReserve = externalAPI.createAccount("rail-car-reserve");
         UserAccount client = externalAPI.createAccount("client");
-        UserAccount reservation = externalAPI.createAccount(checkPoint.getUTransnetAccount().getId() + "-reserve");
+        UserAccount reservation = externalAPI.createAccount(checkPoint.getUTransnetAccount().getName() + "-reserve");
         UserAccount logist = externalAPI.createAccount("logist");
 
         startMainFlow(checkPoint, railCar, client, reservation, logist);
 
         client.approveProposal(Utils.getLast(client.getProposals()));
 
-        checkPoint.update(1);
+        checkPoint.update(1); //wait proposal from car
+        checkPoint.update(1); // check client payment
         assertNotNull(checkPoint.getCurrentTask());
         assertEquals("allow-entrance", checkPoint.getCurrentTask().getName());
         assertTrue(checkPoint.isGateClosed());
@@ -176,13 +180,13 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         assertEquals("ask-payment-from-rail-car", checkPoint.getCurrentTask().getName());
 
         checkPoint.update(1);
-        Proposal paymentRequestFromCP = Utils.getLast(railCar.getProposals());
+        Proposal paymentRequestFromCP = Utils.getLast(railCarReserve.getProposals());
         assertNotNull(paymentRequestFromCP);
         TransferOperation paymentRequestFromCPOperation = (TransferOperation) paymentRequestFromCP.getOperation();
         assertEquals("route-map-id", paymentRequestFromCPOperation.getMemo());
-        assertEquals("close-gate", checkPoint.getCurrentTask().getName());
+        assertEquals("wait-rail-car-exit-and-close-gate", checkPoint.getCurrentTask().getName());
 
-        railCar.approveProposal(paymentRequestFromCP);
+        railCarReserve.approveProposal(paymentRequestFromCP);
         checkPoint.update(1);
         assertNull(checkPoint.getCurrentTask());
 
@@ -201,13 +205,15 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
 
         startMainFlow(checkPoint, railCar, client, reservation, logist);
 
-        checkPoint.update(0);
+        checkPoint.update(1); //wait proposal from car
+        checkPoint.update(1); // check client payment
         assertNotNull(checkPoint.getCurrentTask());
         assertEquals("wait-and-allow-entrance", checkPoint.getCurrentTask().getName());
 
 
         client.approveProposal(Utils.getLast(client.getProposals()));
         checkPoint.update(0);
+        assertNotNull(checkPoint.getCurrentTask());
         assertEquals("ask-payment-from-rail-car", checkPoint.getCurrentTask().getName());
     }
 
@@ -219,7 +225,7 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 client,
                 checkPoint.getUTransnetAccount(),
                 logist,
-                apiObjectFactory.getAssetAmount("UTT", 10),
+                apiObjectFactory.getAssetAmount(defaultAssets.getMainAsset(), 10),
                 "route-map-id"
         );
 
@@ -228,11 +234,11 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
                 reservation,
                 railCar,
                 railCar,
-                apiObjectFactory.getAssetAmount("RA", 10),
+                apiObjectFactory.getAssetAmount(defaultAssets.getResourceAsset(), 10),
                 "route-map-id"
         );
 
-        railCar.approveProposal(Utils.getLast(railCar.getProposals()));
+        reservation.approveProposal(Utils.getLast(railCar.getProposals()));
     }
 
     @Override
@@ -249,16 +255,25 @@ public class CheckPointTest extends SpringTest<CheckPointTest.Config> {
         @Bean
         @Scope("prototype")
         @Autowired
-        CheckPoint4Test checkPoint4Test(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
-            return new CheckPoint4Test(externalAPI, apiObjectFactory);
+        CheckPoint4Test checkPoint4Test(
+                ExternalAPI externalAPI,
+                APIObjectFactory apiObjectFactory,
+                DefaultAssets defaultAssets
+        ) {
+            return new CheckPoint4Test(externalAPI, apiObjectFactory, defaultAssets);
         }
 
     }
 
     public static class CheckPoint4Test extends CheckPoint {
 
-        CheckPoint4Test(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory) {
-            super(externalAPI, apiObjectFactory, null, null);
+        CheckPoint4Test(ExternalAPI externalAPI, APIObjectFactory apiObjectFactory, DefaultAssets defaultAssets) {
+            super(externalAPI, apiObjectFactory, new ActionLogger() {
+                @Override
+                public void logActorAction(Actor actor, String action, String label) {
+
+                }
+            }, defaultAssets);
         }
 
         @Override

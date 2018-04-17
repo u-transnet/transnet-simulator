@@ -44,7 +44,7 @@ public class TransferOperationGraphene extends BaseOperationGraphene implements 
                         memo.getNonce(),
                         memo.getByteMessage()
                 );
-                log.debug(decodedMemo);
+                log.debug("Decoded memo: " + decodedMemo);
             } catch (ChecksumException e) {
                 log.error("Error while decrypting memo", e);
             } catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.github.utransnet.simulator;
 
 import com.github.utransnet.simulator.actors.Client;
+import com.github.utransnet.simulator.externalapi.DefaultAssets;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
 import com.github.utransnet.simulator.route.RouteMap;
@@ -26,4 +27,12 @@ public class SpringTestConfig {
     InputQueue<RouteMap> routeMapInputQueue() {
         return new InputQueueImpl<>(new LinkedBlockingQueue<>(100));
     }
+
+    @Bean
+    @Scope("singleton")
+    DefaultAssets defaultAssets() {
+        return new DefaultAssets();
+    }
+
+
 }

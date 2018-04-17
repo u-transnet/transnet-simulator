@@ -65,6 +65,7 @@ public class ProposalH2 implements Proposal {
         this.apiObjectFactory = apiObjectFactory;
         this.feePayer = (feePayer != null) ? feePayer.getId() : null;
         this.operationJson = apiObjectFactory.operationToJson(operation);
+        approvesToAdd.add(proposingAccount.getId());
     }
 
     protected ProposalH2(

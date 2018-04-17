@@ -155,7 +155,7 @@ public class ClientTest extends SpringTest<ClientTest.Config> {
                 routeMap.getStart(),
                 routeMap.getStart(),
                 routeMap.getNextFee(),
-                "route-map-id"
+                routeMap.getId() + "/rail-car"
         );
 
 
