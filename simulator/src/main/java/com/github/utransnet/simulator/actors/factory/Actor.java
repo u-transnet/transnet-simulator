@@ -2,7 +2,6 @@ package com.github.utransnet.simulator.actors.factory;
 
 import com.github.utransnet.simulator.actors.task.*;
 import com.github.utransnet.simulator.actors.task.EventListener;
-import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
 import com.github.utransnet.simulator.externalapi.Proposal;
 import com.github.utransnet.simulator.externalapi.UserAccount;
@@ -10,7 +9,6 @@ import com.github.utransnet.simulator.externalapi.operations.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -38,10 +36,6 @@ public class Actor {
     @Getter(AccessLevel.PROTECTED)
     @Nullable
     private ActorTask currentTask;
-
-    @Getter(AccessLevel.PROTECTED)
-    @Setter(AccessLevel.PACKAGE)
-    private Set<AssetAmount> balance;
 
     @Getter
     private UserAccount uTransnetAccount;
@@ -191,10 +185,6 @@ public class Actor {
 
     public final void removeDelayedAction(String name) {
         delayedActions.removeIf(delayedAction -> Objects.equals(delayedAction.getName(), name));
-    }
-
-    protected void payTo(UserAccount receiver, AssetAmount assetAmount, String memo) {
-        uTransnetAccount.sendAsset(receiver, assetAmount, memo);
     }
 
     protected void addTask(ActorTask task) {

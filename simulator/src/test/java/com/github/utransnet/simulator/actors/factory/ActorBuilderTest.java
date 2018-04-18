@@ -14,9 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Objects;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Artem on 12.02.2018.
@@ -51,15 +49,6 @@ public class ActorBuilderTest extends SpringTest<ActorBuilderTest.Config> {
     @Test(expected = IllegalArgumentException.class)
     public void testIdNonNull() throws Exception {
         actorBuilder.id(null).build();
-    }
-
-    @Test
-    public void testBalance() throws Exception {
-        TestActor actor = actorBuilder
-                .id("test")
-                .addAsset(objectFactory.getAssetAmount("test-asset", 10))
-                .build();
-        assertEquals(10L, actor.getBalance("test-asset"));
     }
 
     @Override
@@ -99,16 +88,6 @@ public class ActorBuilderTest extends SpringTest<ActorBuilderTest.Config> {
     public static class TestActor extends Actor {
         TestActor(ExternalAPI externalAPI) {
             super(externalAPI);
-        }
-
-        @SuppressWarnings({"ConstantConditions", "SameParameterValue"})
-        long getBalance(String assetId){
-            return super.getBalance()
-                    .stream()
-                    .filter(assetAmount -> Objects.equals(assetAmount.getAsset().getId(), assetId))
-                    .findAny()
-                    .get()
-                    .getAmount();
         }
     }
 

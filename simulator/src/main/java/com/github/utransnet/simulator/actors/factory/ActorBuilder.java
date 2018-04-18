@@ -1,13 +1,11 @@
 package com.github.utransnet.simulator.actors.factory;
 
-import com.github.utransnet.simulator.externalapi.*;
+import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.UserAccount;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by Artem on 02.02.2018.
@@ -16,7 +14,6 @@ public class ActorBuilder<T extends Actor> {
 
     final protected Class<T> clazz;
     private String id;
-    private Set<AssetAmount> balance;
     private UserAccount uTransnetAccount;
 
     @Getter(AccessLevel.PROTECTED)
@@ -35,23 +32,6 @@ public class ActorBuilder<T extends Actor> {
         return this;
     }
 
-    private Set<AssetAmount> getBalance() {
-        if (balance == null) {
-            balance = new HashSet<>(16);
-        }
-        return balance;
-    }
-
-    public ActorBuilder<T> balance(Set<AssetAmount> balance) {
-        this.balance = balance;
-        return this;
-    }
-
-    public ActorBuilder<T> addAsset(AssetAmount assetAmount) {
-        getBalance().add(assetAmount);
-        return this;
-    }
-
     public ActorBuilder<T> uTransnetAccount(UserAccount uTransnetAccount) {
         this.uTransnetAccount = uTransnetAccount;
         return this;
@@ -64,7 +44,6 @@ public class ActorBuilder<T extends Actor> {
             uTransnetAccount = objectFactory.userAccount(id);
         }
         t.setUTransnetAccount(uTransnetAccount);
-        t.setBalance(balance);
         return t;
     }
 
@@ -75,6 +54,6 @@ public class ActorBuilder<T extends Actor> {
 
 
     public String toString() {
-        return "Actor.ActorBuilder(id=" + this.id + ", balance=" + this.balance + ", uTransnetAccount=" + this.uTransnetAccount + ")";
+        return "Actor.ActorBuilder(id=" + this.id + ", uTransnetAccount=" + this.uTransnetAccount + ")";
     }
 }
