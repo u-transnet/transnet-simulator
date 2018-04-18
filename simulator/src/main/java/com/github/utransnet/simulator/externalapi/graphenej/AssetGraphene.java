@@ -1,9 +1,7 @@
 package com.github.utransnet.simulator.externalapi.graphenej;
 
 import com.github.utransnet.simulator.externalapi.Asset;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.*;
 
 /**
  * Created by Artem on 02.04.2018.
@@ -18,6 +16,7 @@ public class AssetGraphene implements Asset, GrapheneWrapper<com.github.utransne
     private String id;
 
     @Getter
+    @Setter(AccessLevel.PACKAGE)
     private String symbol;
 
     AssetGraphene(ExternalAPIGraphene externalAPI) {

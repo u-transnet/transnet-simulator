@@ -81,6 +81,11 @@ public class ExternalAPIEmptyImpl extends ExternalAPI {
     }
 
     @Override
+    public List<AssetAmount> getAccountBalances(UserAccount account) {
+        return new ArrayList<>(0);
+    }
+
+    @Override
     public Optional<BaseOperation> getLastOperation(UserAccount account) {
         return Optional.empty();
     }

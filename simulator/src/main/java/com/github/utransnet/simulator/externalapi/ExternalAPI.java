@@ -69,6 +69,8 @@ public abstract class ExternalAPI {
 
     public abstract UserAccount getAccountById(String name);
 
+    public abstract List<AssetAmount> getAccountBalances(UserAccount account);
+
     public abstract Optional<? extends BaseOperation> getLastOperation(UserAccount account);
 
     public abstract List<? extends BaseOperation> operationsAfter(UserAccount account, String operationId);

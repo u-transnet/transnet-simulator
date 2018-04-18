@@ -224,6 +224,11 @@ public class ExternalAPIH2 extends ExternalAPI {
     }
 
     @Override
+    public List<AssetAmount> getAccountBalances(UserAccount account) {
+        return new ArrayList<>(0); //TODO: count by transfers
+    }
+
+    @Override
     public Optional<? extends BaseOperation> getLastOperation(UserAccount account) {
         List<? extends BaseOperation> operations = getAccountHistory(account);
         if (operations.isEmpty()) {

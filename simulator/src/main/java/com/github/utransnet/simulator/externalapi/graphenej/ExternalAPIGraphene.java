@@ -35,7 +35,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Created by Artem on 01.04.2018.
@@ -237,7 +238,7 @@ public class ExternalAPIGraphene extends ExternalAPI {
         return getAccountHistory(account)
                 .stream()
                 .filter(o -> o.getOperationType() == operationType)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     @Override
@@ -264,7 +265,7 @@ public class ExternalAPIGraphene extends ExternalAPI {
         return responseObject.getResult()
                 .stream()
                 .map(proposal -> new ProposalGraphene(proposal, operationConverter))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     @Override
@@ -294,6 +295,37 @@ public class ExternalAPIGraphene extends ExternalAPI {
     @Override
     public UserAccount getAccountById(String id) {
         return apiObjectFactory.userAccount(id);
+    }
+
+    @Override
+    public List<AssetAmount> getAccountBalances(UserAccount account) {
+        ArrayList<com.github.utransnet.graphenej.Asset> assets = new ArrayList<>(0);
+        ResponseObject<List<com.github.utransnet.graphenej.AssetAmount>> responseObject = new ResponseObject<>();
+        UserAccountGraphene accountGraphene = castToGraphene(account);
+        GetAccountBalances getAccountBalances = new GetAccountBalances(
+                accountGraphene.getRaw(),
+                assets,
+                new BlockingResponseListener<>(responseObject)
+        );
+        broadcastTransaction(getAccountBalances, responseObject);
+
+        if (responseObject.getResult() == null) {
+            throw new NotFoundException("Account with name '" + account.getName() + "' not found");
+        }
+
+        return responseObject.
+                getResult()
+                .stream()
+                .map(assetAmount -> {
+                            AssetAmount assetAmount1 = apiObjectFactory.getAssetAmount(
+                                    assetAmount.getAsset().getObjectId(),
+                                    assetAmount.getAmount().longValue());
+                            AssetGraphene asset = castToGraphene(assetAmount1.getAsset());
+                            asset.setSymbol(assetAmount.getAsset().getSymbol());
+                            return assetAmount1;
+                        }
+                )
+                .collect(toList());
     }
 
     @Override
