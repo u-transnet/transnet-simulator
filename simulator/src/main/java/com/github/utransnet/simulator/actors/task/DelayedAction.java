@@ -1,6 +1,6 @@
 package com.github.utransnet.simulator.actors.task;
 
-import com.github.utransnet.simulator.actors.Actor;
+import com.github.utransnet.simulator.actors.factory.Actor;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

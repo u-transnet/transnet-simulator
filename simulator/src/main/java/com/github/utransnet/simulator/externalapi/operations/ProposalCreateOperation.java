@@ -1,17 +1,15 @@
 package com.github.utransnet.simulator.externalapi.operations;
 
-import com.github.utransnet.simulator.externalapi.Asset;
-import com.github.utransnet.simulator.externalapi.AssetAmount;
-import com.github.utransnet.simulator.externalapi.UserAccount;
+import com.github.utransnet.simulator.externalapi.Proposal;
 
 /**
- * Created by Artem on 06.02.2018.
+ * Created by Artem on 19.02.2018.
  */
 public interface ProposalCreateOperation extends BaseOperation {
 
-    UserAccount getTo();
-    UserAccount getFrom();
-    AssetAmount getAssetAmount();
-    Asset getAsset();
-    long getAmount();
+    Proposal getProposal();
+    @Override
+    default OperationType getOperationType() {
+        return OperationType.PROPOSAL_CREATE;
+    }
 }

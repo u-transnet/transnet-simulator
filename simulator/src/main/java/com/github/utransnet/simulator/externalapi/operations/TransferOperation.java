@@ -15,4 +15,10 @@ public interface TransferOperation extends BaseOperation {
     Asset getAsset();
     long getAmount();
     String getMemo();
+
+
+    @Override
+    default OperationType getOperationType() {
+        return OperationType.TRANSFER;
+    }
 }

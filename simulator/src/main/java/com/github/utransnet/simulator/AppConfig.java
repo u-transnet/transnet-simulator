@@ -1,12 +1,21 @@
 package com.github.utransnet.simulator;
 
-import com.github.utransnet.simulator.actors.factory.ActorConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.utransnet.simulator.actors.Client;
+import com.github.utransnet.simulator.actors.factory.ActorConfig;
+import com.github.utransnet.simulator.actors.factory.ActorFactory;
 import com.github.utransnet.simulator.externalapi.APIObjectFactory;
+import com.github.utransnet.simulator.externalapi.AssetAmount;
 import com.github.utransnet.simulator.externalapi.ExternalAPI;
-import com.github.utransnet.simulator.externalapi.ExternalAPIConfig;
+import com.github.utransnet.simulator.externalapi.graphenej.ExternalAPIGrapheneConfig;
+import com.github.utransnet.simulator.externalapi.h2impl.ExternalAPIH2ImplConfig;
+import com.github.utransnet.simulator.logging.LoggingConfig;
+import com.github.utransnet.simulator.logging.PositionMonitoring;
 import com.github.utransnet.simulator.queue.InputQueue;
 import com.github.utransnet.simulator.queue.InputQueueImpl;
+import com.github.utransnet.simulator.route.AssetAmountDeserializer;
+import com.github.utransnet.simulator.route.AssetAmountSerializer;
 import com.github.utransnet.simulator.route.RouteMap;
 import com.github.utransnet.simulator.route.RouteMapFactory;
 import com.github.utransnet.simulator.services.Supervisor;
@@ -26,7 +35,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Configuration
 @Import({
         ActorConfig.class,
-        ExternalAPIConfig.class
+        ExternalAPIH2ImplConfig.class,
+        ExternalAPIGrapheneConfig.class,
+        LoggingConfig.class
+//        ExternalAPIConfig.class
 })
 public class AppConfig {
 
@@ -43,25 +55,76 @@ public class AppConfig {
         return new InputQueueImpl<>(new LinkedBlockingQueue<>(100));
     }
 
+    @Bean
+    @Scope("singleton")
+    @Autowired
+    PositionMonitoring positionMonitoring(ExternalAPI externalAPI) {
+        return new PositionMonitoring(externalAPI);
+    }
+
+
 
     @Bean
     @Scope("singleton")
     @Autowired
-    Supervisor supervisor(InputQueue<RouteMap> routeMapInputQueue, InputQueue<Client> clientInputQueue) {
-        return new SupervisorImpl(routeMapInputQueue, clientInputQueue);
+    Supervisor supervisor(
+            InputQueue<RouteMap> routeMapInputQueue,
+            InputQueue<Client> clientInputQueue,
+            ActorFactory actorFactory,
+            ExternalAPI externalAPI,
+            APIObjectFactory apiObjectFactory,
+            PositionMonitoring positionMonitoring
+    ) {
+        return new SupervisorImpl(
+                routeMapInputQueue,
+                clientInputQueue,
+                actorFactory,
+                externalAPI,
+                apiObjectFactory,
+                positionMonitoring
+        );
     }
 
     @Bean
+    @Scope("prototype")
     @Autowired
-    RouteMap routeMap(ExternalAPI externalAPI, APIObjectFactory objectFactory) {
-        return new RouteMap(externalAPI, objectFactory);
+    RouteMap routeMap(ExternalAPI externalAPI) {
+        return new RouteMap(externalAPI);
+    }
+
+    @Bean
+    @Scope("prototype")
+    AssetAmountSerializer assetAmountSerializer() {
+        return new AssetAmountSerializer();
+    }
+
+    @Bean
+    @Scope("prototype")
+    @Autowired
+    AssetAmountDeserializer assetAmountDeserializer(APIObjectFactory objectFactory) {
+        return new AssetAmountDeserializer(objectFactory);
     }
 
     @Bean
     @Scope("singleton")
     @Autowired
-    RouteMapFactory routeMapFactory(ApplicationContext context) {
-        return new RouteMapFactory(context);
+    ObjectMapper objectMapper(
+            AssetAmountDeserializer assetAmountDeserializer,
+            AssetAmountSerializer assetAmountSerializer
+    ) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(AssetAmount.class, assetAmountDeserializer);
+        module.addSerializer(AssetAmount.class, assetAmountSerializer);
+        objectMapper.registerModule(module);
+        return objectMapper;
+    }
+
+    @Bean
+    @Scope("singleton")
+    @Autowired
+    RouteMapFactory routeMapFactory(ApplicationContext context, ObjectMapper objectMapper) {
+        return new RouteMapFactory(context, objectMapper);
     }
 
 }

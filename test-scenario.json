@@ -1,0 +1,101 @@
+{
+  "infrastructure": [
+    {
+      "userInfo": {
+        "id": "cp6",
+        "name": "cp6",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": false
+    },
+    {
+      "userInfo": {
+        "id": "cp2",
+        "name": "cp2",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": false
+    },
+    {
+      "userInfo": {
+        "id": "cp3",
+        "name": "cp3",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": true
+    },
+    {
+      "userInfo": {
+        "id": "cp4",
+        "name": "cp4",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": true
+    },
+    {
+      "userInfo": {
+        "id": "cp7",
+        "name": "cp7",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": true
+    },
+    {
+      "userInfo": {
+        "id": "cp5",
+        "name": "cp5",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": false
+    },
+    {
+      "userInfo": {
+        "id": "cp1",
+        "name": "cp1",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "station": true
+    }
+  ],
+  "logist": {
+    "id": "logist",
+    "name": "logist",
+    "balance": []
+  },
+  "routeMapPrice": "2 UTT",
+  "clients": [
+    {
+      "id": "client",
+      "name": "client",
+      "balance": [
+        "100 UTT"
+      ]
+    }
+  ],
+  "railCars": [
+    {
+      "userInfo": {
+        "id": "car",
+        "name": "car",
+        "balance": [
+          "100 RA"
+        ]
+      },
+      "startPointId": "cp1"
+    }
+  ]
+}

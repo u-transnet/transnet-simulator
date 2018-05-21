@@ -9,6 +9,6 @@ import org.springframework.context.ApplicationContext;
  */
 public class ClientBuilder extends ActorBuilder<Client> {
     ClientBuilder(ApplicationContext context, APIObjectFactory objectFactory) {
-        super(context, objectFactory);
+        super(Client.class, context, objectFactory);
     }
 }

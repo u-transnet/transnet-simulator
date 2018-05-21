@@ -1,7 +1,13 @@
+[![English](https://thumb.ibb.co/jDrVkd/gb.png)](README.md) [![Russian](https://thumb.ibb.co/cjYMrJ/ru.png)](README.ru.md)
+
 # transnet-simulator
 Репозиторий под проектирование и разработку симулятора (Программного прототипа) сети TRANSNET, предназначенного для моделирования и нагрузочного тестирования
 
-[Альбом диаграмм](https://www.draw.io/#Hu-transnet%2Ftransnet-simulator%2Fconcept%2Fconcept%2Fdrawings%2Fut-simulator.xml)
+[Задачи проекта, Jira](https://u-trans.atlassian.net/browse/UK)
+
+[Альбом диаграмм](https://www.draw.io/#Hu-transnet%2Ftransnet-simulator%2Fdevelop%2Fconcept%2Fdrawings%2Fut-simulator.xml)
+
+[Диаграмма транзакций](https://www.draw.io/#Hu-transnet%2Ftransnet-simulator%2Fdevelop%2Fconcept%2Fdrawings%2Ftransactions-bpmn.xml)
 
 [Архитектура решения](https://docs.google.com/document/d/1u2sPJNCBUANPfdsEjJ6MSofIQ3VsHTOylfVS7iTYUaM/edit#)
 
@@ -10,7 +16,7 @@
 ## Архитектура решения
 * [Работа с маршрутной картой](concept/docs/Route_Map.md) ✔
 * [Процесс заказа (подачи) вагона](concept/docs/Boarding.md)
-* [Определение положения контейнера на пути](concept/docs/Locating) ✔
+* [Определение положения контейнера на пути](concept/docs/Locating.md) ✔
 * [Типы транзакций](concept/docs/Transactions.md) ✔
 * [Резервирование РА](concept/docs/Reservation.md) ✔
 * [Типы ресурсных активов](concept/docs/Infrastructure.md) ✔
@@ -18,4 +24,17 @@
 * [Output](concept/docs/Output.md) ✔
 * [Запросы к внешнему API](concept/docs/External_API.md) ✔
 * [Диаграмма классов](concept/docs/Classes.md)
+
+## Работа с кодом
+* [ExternalAPI](concept/docs/development/ExternalAPI.md)
+* [ActorModel](concept/docs/development/ActorModel.md)
+
+## Related projects
+- [graphenej](https://github.com/u-transnet/graphenej)
+
+## Contributing
+We'd love to have your helping hand on our project! See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on what we're looking for and how to get started.
+
+## License
+Project is under the MIT license. See [LICENSE](LICENSE) for more information.
 

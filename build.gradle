@@ -1,19 +1,58 @@
+
 buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        mavenLocal()
     }
     dependencies {
 
     }
 }
 
-plugins{
+plugins {
     id 'java'
     id 'idea'
     id 'eclipse'
     id 'io.franzbecker.gradle-lombok' version '1.11' apply false
     id 'org.springframework.boot' version '1.5.9.RELEASE' apply false
+    id "aspectj.gradle" version "0.1.6" apply false
+//    id "com.zoltu.application-agent" version "1.0.8" apply false
+}
+
+def findAgentJars(agents) {
+//    configurations.getByName("agents").each { logger.info it}
+
+    project.logger.lifecycle ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    project.logger.lifecycle agents.files.toString()
+    agents.each {
+        println("+>" + it)
+    }
+    ext.springInstrument = agents
+    return agents
+}
+
+/*task copyAgent(type: Copy) {
+    from findAgentJars(configurations)
+    into "$buildDir/lib"
+}*/
+task copyAgent {
+    doLast {
+
+        println("===============================")
+        println("compile dependencies:")
+        configurations.all.each {
+            println(it)
+        }
+        def agents = configurations.getByName("compile")
+        agents.files.each {
+            println("+>" + it)
+        }
+        copy {
+            from configurations.getByName("compile")
+            into "$buildDir/lib"
+        }
+    }
 }
 
 allprojects {
@@ -26,32 +65,95 @@ allprojects {
         commonsLang3Version = '3.7'
         jetbrainsAnnotationsVersion = '15.0'
         jacksonVersion = '2.9.4'
+        h2version = '1.4.196'
+        hamcrestVersion = '1.3'
+        okhttpVersion = '3.10.0'
+//        aspectjweaverVersion = "1.8.13"
+        aspectjVersion = "1.8.13"
+        springInstrument = ''
     }
 
     repositories {
         mavenCentral()
         jcenter()
+        mavenLocal()
+    }
+    configurations.create('agents')
+
+    configurations {
+        runtimeAgent
     }
 }
 
-project(':simulator'){
+project(':simulator') {
     version '0.0.1'
 
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.franzbecker.gradle-lombok'
+    apply plugin: 'application'
+//    apply plugin: 'com.zoltu.application-agent'
+//    apply plugin: 'aspectj.gradle'
+
+    mainClassName = "com.github.utransnet.simulator.Main"
+
+//    tasks.getByName("run").dependsOn << copyAgent
 
     dependencies {
         testCompile group: 'junit', name: 'junit', version: junitVersion
-        compile 'org.springframework.boot:spring-boot-starter-web'
+        testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: hamcrestVersion
         testCompile 'org.springframework.boot:spring-boot-starter-test'
+        compile 'org.springframework.boot:spring-boot-starter-web'
+        compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
+        compile group: 'org.springframework.boot', name: 'spring-boot-starter-aop'
+        compile group: 'org.springframework.boot', name: 'spring-boot-starter-logging'
+
+        agents "org.springframework:spring-instrument:4.3.13.RELEASE"
+//        compile group: 'org.springframework', name: 'spring-instrument', version: '4.3.13.RELEASE'
+        // BEGIN: Dynamic agent JAR config
+        runtimeAgent("org.aspectj:aspectjweaver")
+        runtimeAgent("org.springframework:spring-instrument")
+        // END: Dynamic agent JAR config
+
+//        compile "org.aspectj:aspectjweaver:$aspectjweaverVersion"
+
         compile group: 'org.jetbrains', name: 'annotations', version: jetbrainsAnnotationsVersion
 
         compile group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
 
+        compile group: 'com.h2database', name: 'h2', version: h2version
 
+        compile "com.squareup.okhttp3:okhttp:$okhttpVersion"
 
-//        compile 'com.github.utransnet:graphenj:0.4.2' // not yet published
+        compile 'com.github.utransnet:graphenej:0.5.4' // not yet published
+//        compile files("libs/graphenej-0.4.6.jar")
     }
 
+
+    /*tasks.getByName("run") {
+        println "test"
+        jvmArgs = [
+            //                "-javaagent:aspectjweaver-1.8.13.jar",
+            "-javaagent:$buildDir/lib/$springInstrument",
+            "-Dorg.aspectj.tracing.enabled=true",
+            "-Daj.weaving.verbose=false",
+            "-Dorg.aspectj.weaver.showWeaveInfo=false",
+            "-DcontainerNamespace=atp2sxg",
+            "-Dspring.profiles.active=PooledConDS"
+        ]
+    }*/
+    // BEGIN: Dynamic agent JAR config
+    test.doFirst {
+        configurations.runtimeAgent.each {
+            File jarFile ->
+                jvmArgs("-javaagent:${jarFile.absolutePath}")
+        }
+    }
+
+    bootRun.doFirst {
+        configurations.runtimeAgent.each {
+            File jarFile ->
+                jvmArgs("-javaagent:${jarFile.absolutePath}")
+        }
+    }
 }
