@@ -29,12 +29,12 @@
 * [ExternalAPI](concept/docs/development/ExternalAPI.md)
 * [ActorModel](concept/docs/development/ActorModel.md)
 
-## Related projects
+## Связанные проекты
 - [graphenej](https://github.com/u-transnet/graphenej)
 
-## Contributing
-We'd love to have your helping hand on our project! See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on what we're looking for and how to get started.
+## Сотрудничество
+Мы будем рады вашей помощи в развитии проекта! Откройте [CONTRIBUTING.ru.md](CONTRIBUTING.ru.md) для того, чтобы узнать чем Вы можете поможете помочь проекту и как присоединиться
 
-## License
-Project is under the MIT license. See [LICENSE](LICENSE) for more information.
+## Лицензия
+Проект использует MIT лицензию. Откройте [LICENSE](LICENSE) для подробностей
 
